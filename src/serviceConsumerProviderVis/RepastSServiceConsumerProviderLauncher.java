@@ -15,6 +15,7 @@ import repast.simphony.space.grid.Grid;
 import repast.simphony.space.grid.GridBuilderParameters;
 import repast.simphony.space.grid.SimpleGridAdder;
 import repast.simphony.space.grid.WrapAroundBorders;
+import repast.simphony.util.ContextUtils;
 import sajas.core.Agent;
 import sajas.core.Runtime;
 import sajas.sim.repasts.RepastSLauncher;
@@ -44,10 +45,10 @@ public class RepastSServiceConsumerProviderLauncher extends RepastSLauncher {
 		try {
 		MainController main = new MainController();
 		mainContainer.acceptNewAgent("Main", main).start();
-		for(int i = 0; i < 1; i++){
+		int numElevators = 1;
+		for(int i = 0; i < numElevators; i++){
 			BasicElevatorModel elevator = new BasicElevatorModel(1000, 500);
-			
-				mainContainer.acceptNewAgent("Elevator"+i, elevator).start();;
+				mainContainer.acceptNewAgent("Elevator"+i, elevator).start();
 			} 
 		}
 		catch (StaleProxyException e) {

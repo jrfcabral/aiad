@@ -10,6 +10,13 @@ public class Person {
 		this.destination = destination;
 		this.weight = RandomHelper.nextDoubleFromTo(40, 200);
 	}
-	
+
+	public double getWeight() {
+		return weight;
+	}
+
+	public int getDestination() {
+		return destination;
+	}	
 	
 }

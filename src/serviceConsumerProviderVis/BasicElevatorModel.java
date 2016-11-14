@@ -1,6 +1,8 @@
 package serviceConsumerProviderVis;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.ListIterator;
 
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -28,6 +30,7 @@ public class BasicElevatorModel extends Agent{
 	private int timeBetweenFloors = 1000; //millis
 	private int maxLoad = 500; //kg
 	private LinkedHashSet<Integer> floors;
+	public ArrayList<ArrayList<Person>> people = new ArrayList< ArrayList<Person>>(MainController.FLOORNUM);
 	private double currLoad;
 	public Movement state;
 	public int currentObjective;
@@ -44,11 +47,17 @@ public class BasicElevatorModel extends Agent{
 		this.maxLoad = maxLoad;
 		this.floors = new LinkedHashSet<Integer>();
 		this.state = Movement.NONE;
+		for(int i = 0; i < MainController.FLOORNUM; i++){
+			people.add(new ArrayList<Person>());
+		}
 
 	}
 	
 	public void setup(){
 		System.out.println("Elevator " + getLocalName() + " coming online");
+		
+		Logger.writeToLog(getLocalName() + " coming online");
+		
 		this.context = ContextUtils.getContext((Object)this);
 		this.space = (ContinuousSpace) context.getProjection("space");
 		this.grid =  (Grid) context.getProjection("grid");
@@ -72,17 +81,31 @@ public class BasicElevatorModel extends Agent{
 					NdPoint currPos = space.getLocation(this.myAgent);
 					System.out.println("Objectivo: " + BasicElevatorModel.this.currentObjective);
 					System.out.println("Andar atual: "+ currPos.getY());
+					System.out.println("Peso atual: " + BasicElevatorModel.this.currLoad);
 					System.out.print("[");
 					for(int val: BasicElevatorModel.this.floors){
 						System.out.print(val+", ");
 					}
 					System.out.print("]\n");
+					System.out.println("Numero de pessoas cá dentro: " + BasicElevatorModel.this.getNumPeople());
+					
+					
+					
+					
 					if(BasicElevatorModel.this.currentObjective >= 0){
 						if(currPos.getY() == currentObjective){
-							System.out.println("objectivo atingido");
+							
+							Logger.writeToLog(getLocalName() + " Reached objective floor: " + BasicElevatorModel.this.currentFloor + " with " 
+							+ BasicElevatorModel.this.getNumPeople() + " people");
+							
 							BasicElevatorModel.this.floors.remove(currentObjective);
+							
+							ejectPassengers(BasicElevatorModel.this.currentFloor);
+							getNewPassengers(BasicElevatorModel.this.currentFloor);
+							
 							searchNextObjective();
-							System.out.println("Novo Objectivo: " + BasicElevatorModel.this.currentObjective);
+							Logger.writeToLog(getLocalName() + " leaving floor with " + BasicElevatorModel.this.getNumPeople() + " peoples");
+							
 
 						}
 						if(BasicElevatorModel.this.state == Movement.UP){	
@@ -112,6 +135,8 @@ public class BasicElevatorModel extends Agent{
 					if(msg != null){
 						
 						floors.add(Integer.parseInt(msg.getContent()));
+						Logger.writeToLog(getLocalName() + " Received request to go to " + msg.getContent()); 
+						searchNextObjective();
 						
 						
 						
@@ -125,7 +150,6 @@ public class BasicElevatorModel extends Agent{
 					}
 				}
 	  		});
-	  		
 	  	}
 	  	catch (FIPAException fe) {
 	  		fe.printStackTrace();
@@ -146,7 +170,7 @@ public class BasicElevatorModel extends Agent{
 			}			
 		}
 		
-		if (result != -1 && result != this.currentFloor){//this.state == Movement.NONE && result != -1){
+		if (result != -1 && result != this.currentFloor){
 			if(result < this.currentFloor){
 				this.state = Movement.DOWN;
 			}
@@ -162,6 +186,56 @@ public class BasicElevatorModel extends Agent{
 		}
 		
 		this.currentObjective = result;
+		System.out.println("Novo Objectivo: " + this.currentObjective);
+		Logger.writeToLog("Calculated new Objective: " + this.currentObjective);
+	}
+	
+	
+	private void ejectPassengers(int floor){
+		ListIterator<Person> it = this.people.get(floor).listIterator();
+		while(it.hasNext()){
+			System.out.println("VAI SAIR UM MANO");			
+			this.currLoad -= it.next().getWeight();
+			it.remove();
+			/*try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}*/
+		}
+	}
+	
+	private void getNewPassengers(int floor){
+		ListIterator<Person> it = MainController.peopleAtFloors.get(floor).listIterator();
+		while(it.hasNext()){
+			Person p = it.next();
+			if(this.currLoad + p.getWeight() >= this.maxLoad){
+				continue;
+			}
+			System.out.println("VAI ENTRAR UM MANO");
+			this.currLoad += p.getWeight();
+			
+			this.people.get(p.getDestination()).add(p);
+			
+			this.floors.add(p.getDestination());
+			it.remove();
+			Logger.writeToLog("Person came in with objective: " + p.getDestination());
+			/*try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}*/
+		}
+	}
+	
+	private int getNumPeople(){
+		int totalSize = 0;
+		for(int i = 0; i < MainController.FLOORNUM; i++){
+			totalSize += this.people.get(i).size();
+		}
+		return totalSize;
 	}
 	
 	

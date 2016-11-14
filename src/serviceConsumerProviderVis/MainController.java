@@ -13,11 +13,14 @@ import sajas.core.behaviours.TickerBehaviour;
 import sajas.domain.DFService;
 
 public class MainController extends Agent {
-	public static ArrayList<ArrayList<Person>> peopleAtFloors = new ArrayList< ArrayList<Person>>(20);	
+	public static final int FLOORNUM = 21;
+	
+	
+	public static ArrayList<ArrayList<Person>> peopleAtFloors = new ArrayList< ArrayList<Person>>(FLOORNUM);	
 	
 	public MainController(){
 		System.out.println("Constructing");
-		for(int i = 0; i < 20; i++){
+		for(int i = 0; i < FLOORNUM; i++){
 			MainController.peopleAtFloors.add(new ArrayList<Person>());
 		}
 	}
@@ -25,7 +28,7 @@ public class MainController extends Agent {
 	private int randomDestination(int origin){
 		int destination;
 		do{
-			destination = RandomHelper.nextIntFromTo(0, 20);
+			destination = RandomHelper.nextIntFromTo(0, FLOORNUM-1);
 		}while(destination == origin);
 		return destination;
 	}
@@ -52,7 +55,7 @@ public class MainController extends Agent {
 				int prob = RandomHelper.nextIntFromTo(0, 100);
 				if (prob <= 20) {
 					
-					int floor = RandomHelper.nextIntFromTo(0, 29 );
+					int floor = RandomHelper.nextIntFromTo(0, FLOORNUM+9 );
 					if (floor < 10) {
 						MainController.peopleAtFloors.get(0).add(new Person(randomDestination(0)));
 						createRequest(0);
