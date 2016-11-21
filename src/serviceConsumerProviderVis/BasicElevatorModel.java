@@ -6,6 +6,9 @@ import java.util.ListIterator;
 
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.FailureException;
+import jade.domain.FIPAAgentManagement.NotUnderstoodException;
+import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -19,10 +22,11 @@ import sajas.core.Agent;
 import sajas.core.behaviours.CyclicBehaviour;
 import sajas.core.behaviours.TickerBehaviour;
 import sajas.domain.DFService;
+import sajas.proto.ContractNetResponder;
 
 public class BasicElevatorModel extends Agent{
 	
-	private enum Movement{
+	public	 enum Movement{
 		NONE, UP, DOWN
 	}
 	
@@ -38,7 +42,7 @@ public class BasicElevatorModel extends Agent{
 	public ContinuousSpace space;
 	public Grid grid;
 
-	private MessageTemplate template = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+	private MessageTemplate template = MessageTemplate.MatchPerformative(ACLMessage.CFP);
 
 
 	
@@ -126,46 +130,100 @@ public class BasicElevatorModel extends Agent{
 				}
 	  			
 	  		});
+		}
 	  		
-	  		addBehaviour(new CyclicBehaviour(this){
-
-				@Override
-				public void action() {
-					ACLMessage msg = myAgent.receive(template);
-					if(msg != null){
-						
-						floors.add(Integer.parseInt(msg.getContent()));
-						Logger.writeToLog(getLocalName() + " Received request to go to " + msg.getContent()); 
-						searchNextObjective();
-						
-						
-						
-						
-						/*ACLMessage reply = msg.createReply();
-						int floorToStop = Integer.parseInt(msg.getContent());
-						double heuristicScore = calculateScore(floorToStop);
-						reply.setPerformative(ACLMessage.INFORM);
-						reply.setContent(getLocalName() + " " + heuristicScore);
-						myAgent.send(reply);*/
-					}
-				}
-	  		});
-	  	}
+//	  		addBehaviour(new CyclicBehaviour(this){
+//
+//				@Override
+//				public void action() {
+//					ACLMessage msg = myAgent.receive(template);
+//					if(msg != null){
+//						
+//						/*floors.add(Integer.parseInt(msg.getContent()));
+//						Logger.writeToLog(getLocalName() + " Received request to go to " + msg.getContent()); 
+//						searchNextObjective();*/
+//
+//						ACLMessage reply = msg.createReply();
+//						int floorToStop = Integer.parseInt(msg.getContent());
+//						double heuristicScore = calculateScore(floorToStop);
+//						reply.setPerformative(ACLMessage.PROPOSE);
+//						reply.setContent(getLocalName() + " " + heuristicScore);
+//						myAgent.send(reply);
+//					}
+//				}
+//	  		});
+//	  	}
 	  	catch (FIPAException fe) {
 	  		fe.printStackTrace();
 	  	}
+		
+		addBehaviour(new ContractNetResponder(this, template) {
+			protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
+				System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
+				int proposal = calculateScore(Integer.parseInt(cfp.getContent()));
+				if (proposal > 2) {
+					// We provide a proposal
+					System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
+					ACLMessage propose = cfp.createReply();
+					propose.setPerformative(ACLMessage.PROPOSE);
+					propose.setContent(String.valueOf(proposal));
+					return propose;
+				}
+				else {
+					// We refuse to provide a proposal
+					System.out.println("Agent "+getLocalName()+": Refuse");
+					throw new RefuseException("evaluation-failed");
+				}
+			}
+			
+			@Override
+			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
+				System.out.println("Agent "+getLocalName()+": Proposal accepted");
+				if (BasicElevatorModel.this.floors.add(Integer.parseInt(propose.getContent()))) {
+					System.out.println("Agent "+getLocalName()+": Action successfully performed");
+					ACLMessage inform = accept.createReply();
+					inform.setPerformative(ACLMessage.INFORM);
+					return inform;
+				}
+				else {
+					System.out.println("Agent "+getLocalName()+": Action execution failed");
+					throw new FailureException("unexpected-error");
+				}	
+			}
+
+			protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
+				System.out.println("Agent "+getLocalName()+": Proposal rejected");
+			}
+		});
 	}
+	
+	
+	public int calculateScore(int target){
+		if((this.currentFloor < target && this.state.equals(Movement.UP)) || (this.currentFloor > target && this.state.equals(Movement.DOWN))){
+			return Integer.MAX_VALUE;
+		}
+		
+		if(target == this.currentFloor){
+			return 0;
+		}
+		
+		return Math.abs(target - this.currentFloor);
+		
+		
+	}
+	
+	
 	
 	public void searchNextObjective(){
 		int result = -1;
 		for(int val: this.floors){
-			if(this.state == Movement.UP && val > this.currentFloor && (val < result || result == -1)){
+			if(this.state.equals(Movement.UP) && val > this.currentFloor && (val < result || result == -1)){
 				result = val;
 			}
-			else if(this.state == Movement.DOWN && val > this.currentFloor && (val > result || result == -1)){
+			else if(this.state.equals(Movement.DOWN) && val < this.currentFloor && (val > result || result == -1)){
 				result = val;
 			}
-			else if (this.state == Movement.NONE && (result == -1 || Math.abs(this.currentFloor-val) < Math.abs(this.currentFloor - result))){
+			else if (this.state.equals(Movement.NONE) && (result == -1 || Math.abs(this.currentFloor-val) < Math.abs(this.currentFloor - result))){
 				result = val;
 			}			
 		}
@@ -190,6 +248,42 @@ public class BasicElevatorModel extends Agent{
 		Logger.writeToLog("Calculated new Objective: " + this.currentObjective);
 	}
 	
+	//for testing purposes only
+	public static int searchNextObjective(LinkedHashSet<Integer> objectiveList, int startingFloor, Movement state){
+		int result = -1;
+		int currentFloor = startingFloor;
+		Movement currentState = state;
+		for(int val: objectiveList){
+			if(currentState.equals(Movement.UP) && val > currentFloor && (val < result || result == -1)){
+				result = val;
+			}
+			else if(currentState.equals(Movement.DOWN) && val < currentFloor && (val > result || result == -1)){
+				result = val;
+			}
+			else if (currentState.equals(Movement.NONE) && (result == -1 || Math.abs(currentFloor-val) < Math.abs(currentFloor - result))){
+				result = val;
+			}			
+		}
+		
+		if (result != -1 && result != currentFloor){
+			if(result < currentFloor){
+				state = Movement.DOWN;
+			}
+			else {
+				state = Movement.UP;
+			}
+			
+			System.out.println("estou no " + startingFloor + " e vou passar a ir para " + result + " pelo que vou deslocar-me no sentido " + state);
+		}
+		else if (result == -1){
+			System.out.println("nao tenho mais nada para fazer");
+			state = Movement.NONE;
+		}
+		
+		System.out.println("Novo Objectivo: " + result);
+		//Logger.writeToLog("Calculated new Objective: " + this.currentObjective);
+		return result;
+	}
 	
 	private void ejectPassengers(int floor){
 		ListIterator<Person> it = this.people.get(floor).listIterator();
@@ -246,9 +340,5 @@ public class BasicElevatorModel extends Agent{
 			e.printStackTrace();
 		}
 		System.out.println("Elevator " + getLocalName() + " going offline");
-	}
-	
-	public double calculateScore(int intendedFloor){
-		return 0;
 	}
 }
