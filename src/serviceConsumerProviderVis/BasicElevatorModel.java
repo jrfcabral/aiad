@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.ListIterator;
 
+import Util.Logger;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.FailureException;
@@ -41,6 +42,12 @@ public class BasicElevatorModel extends Agent{
 	Context<Object> context; 
 	public ContinuousSpace space;
 	public Grid grid;
+	// Statistics
+	public int emptyTime = 0; //ticks/seconds 
+	public int withPeopleTime = 0; //ticks/seconds
+	public int stoppedTime = 0; // ticks/seconds
+	public int courseTime = 0; // ticks/seconds
+	public int totalTime = 0; // ticks/seconds
 
 	private MessageTemplate template = MessageTemplate.MatchPerformative(ACLMessage.CFP);
 
@@ -91,10 +98,24 @@ public class BasicElevatorModel extends Agent{
 						System.out.print(val+", ");
 					}
 					System.out.print("]\n");
-					System.out.println("Numero de pessoas cá dentro: " + BasicElevatorModel.this.getNumPeople());
+					System.out.println("Numero de pessoas dentro: " + BasicElevatorModel.this.getNumPeople());
+					System.out.println("Tempo total: " + totalTime);
+					System.out.println("Tempo em que esteve vazio: " + emptyTime);
+					System.out.println("Tempo com pessoas: " + withPeopleTime);
+					System.out.println("Tempo parado: " + stoppedTime);
+					System.out.println("Tempo em andamento: " + courseTime);
 					
+					totalTime++;
+					if (BasicElevatorModel.this.getNumPeople() == 0)
+						emptyTime++;
+					else
+						withPeopleTime++;
 					
-					
+					//TODO confirmar calculo					
+					if (currPos.getY() == currentObjective || currentObjective < 0)
+						stoppedTime++;
+					else
+						courseTime++;
 					
 					if(BasicElevatorModel.this.currentObjective >= 0){
 						if(currPos.getY() == currentObjective){
