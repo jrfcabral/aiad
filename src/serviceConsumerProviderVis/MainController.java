@@ -136,7 +136,7 @@ public class MainController extends Agent {
 				
 				protected void handleAllResponses(Vector responses, Vector acceptances) {
 					// Evaluate proposals.
-					int bestProposal = -1;
+					int bestProposal = Integer.MAX_VALUE;
 					jade.core.AID bestProposer = null;
 					ACLMessage accept = null;
 					Enumeration e = responses.elements();
@@ -147,7 +147,7 @@ public class MainController extends Agent {
 							reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
 							acceptances.addElement(reply);
 							int proposal = Integer.parseInt(msg.getContent());
-							if (proposal > bestProposal) {
+							if (proposal < bestProposal) {
 								bestProposal = proposal;
 								bestProposer = (jade.core.AID) msg.getSender();
 								accept = reply;

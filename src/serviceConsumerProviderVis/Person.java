@@ -5,7 +5,7 @@ import repast.simphony.random.RandomHelper;
 public class Person {
 	private double weight;
 	private int destination;
-
+	
 	public Person(int destination){
 		this.destination = destination;
 		this.weight = generateWeight();
@@ -18,7 +18,7 @@ public class Person {
 	public int getDestination() {
 		return destination;
 	}
-
+	
 	private double generateWeight(){
 		double[] weightArray = new double[10];
 		weightArray[0] = RandomHelper.nextDoubleFromTo(40, 60);
@@ -31,5 +31,5 @@ public class Person {
 		weightArray[9] = RandomHelper.nextDoubleFromTo(100, 150);
 		return weightArray[RandomHelper.nextIntFromTo(0, 9)];
 	}
-
+	
 }

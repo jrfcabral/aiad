@@ -42,20 +42,22 @@ public class BasicElevatorModel extends Agent{
 	Context<Object> context; 
 	public ContinuousSpace space;
 	public Grid grid;
-	// Statistics
+	public int startingX;
 	public int emptyTime = 0; //ticks/seconds 
 	public int withPeopleTime = 0; //ticks/seconds
 	public int stoppedTime = 0; // ticks/seconds
 	public int courseTime = 0; // ticks/seconds
 	public int totalTime = 0; // ticks/seconds
+	  
 
 	private MessageTemplate template = MessageTemplate.MatchPerformative(ACLMessage.CFP);
 
 
 	
-	public BasicElevatorModel(int timeBetweenFloors, int maxLoad){
+	public BasicElevatorModel(int timeBetweenFloors, int maxLoad, int startingX){
 		this.timeBetweenFloors = timeBetweenFloors;
 		this.maxLoad = maxLoad;
+		this.startingX = startingX;
 		this.floors = new LinkedHashSet<Integer>();
 		this.state = Movement.NONE;
 		for(int i = 0; i < MainController.FLOORNUM; i++){
@@ -73,7 +75,7 @@ public class BasicElevatorModel extends Agent{
 		this.space = (ContinuousSpace) context.getProjection("space");
 		this.grid =  (Grid) context.getProjection("grid");
 		this.currentObjective = -1;
-		space.moveTo(this, 25, 10);
+		space.moveTo(this, BasicElevatorModel.this.startingX, 10);
 		this.currentFloor = 10;
 		try {
 	  		DFAgentDescription dfd = new DFAgentDescription();
@@ -104,18 +106,21 @@ public class BasicElevatorModel extends Agent{
 					System.out.println("Tempo com pessoas: " + withPeopleTime);
 					System.out.println("Tempo parado: " + stoppedTime);
 					System.out.println("Tempo em andamento: " + courseTime);
-					
+					 					
 					totalTime++;
 					if (BasicElevatorModel.this.getNumPeople() == 0)
 						emptyTime++;
 					else
 						withPeopleTime++;
-					
+					  					
 					//TODO confirmar calculo					
 					if (currPos.getY() == currentObjective || currentObjective < 0)
 						stoppedTime++;
 					else
 						courseTime++;
+					
+					
+					
 					
 					if(BasicElevatorModel.this.currentObjective >= 0){
 						if(currPos.getY() == currentObjective){
@@ -182,25 +187,18 @@ public class BasicElevatorModel extends Agent{
 			protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
 				System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
 				int proposal = calculateScore(Integer.parseInt(cfp.getContent()));
-				if (proposal > 2) {
-					// We provide a proposal
-					System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
-					ACLMessage propose = cfp.createReply();
-					propose.setPerformative(ACLMessage.PROPOSE);
-					propose.setContent(String.valueOf(proposal));
-					return propose;
-				}
-				else {
-					// We refuse to provide a proposal
-					System.out.println("Agent "+getLocalName()+": Refuse");
-					throw new RefuseException("evaluation-failed");
-				}
+				// We provide a proposal
+				System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
+				ACLMessage propose = cfp.createReply();
+				propose.setPerformative(ACLMessage.PROPOSE);
+				propose.setContent(String.valueOf(proposal));
+				return propose;
 			}
 			
 			@Override
 			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
 				System.out.println("Agent "+getLocalName()+": Proposal accepted");
-				if (BasicElevatorModel.this.floors.add(Integer.parseInt(propose.getContent()))) {
+				if (BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent()))) {
 					System.out.println("Agent "+getLocalName()+": Action successfully performed");
 					ACLMessage inform = accept.createReply();
 					inform.setPerformative(ACLMessage.INFORM);
@@ -229,8 +227,6 @@ public class BasicElevatorModel extends Agent{
 		}
 		
 		return Math.abs(target - this.currentFloor);
-		
-		
 	}
 	
 	
@@ -257,7 +253,6 @@ public class BasicElevatorModel extends Agent{
 				this.state = Movement.UP;
 			}
 			
-			System.out.println("estou no " + this.currentObjective + " e vou passar a ir para " + result + " pelo que vou deslocar-me no sentido " + this.state);
 		}
 		else if (result == -1){
 			System.out.println("nao tenho mais nada para fazer");
@@ -309,7 +304,7 @@ public class BasicElevatorModel extends Agent{
 	private void ejectPassengers(int floor){
 		ListIterator<Person> it = this.people.get(floor).listIterator();
 		while(it.hasNext()){
-			System.out.println("VAI SAIR UM MANO");			
+			System.out.println("VAI SAIR UM MANO ---------------------------------------------------------------------------");			
 			this.currLoad -= it.next().getWeight();
 			it.remove();
 			/*try {
@@ -328,7 +323,7 @@ public class BasicElevatorModel extends Agent{
 			if(this.currLoad + p.getWeight() >= this.maxLoad){
 				continue;
 			}
-			System.out.println("VAI ENTRAR UM MANO");
+			System.out.println("VAI ENTRAR UM MANO -----------------------------------------------------------------------");
 			this.currLoad += p.getWeight();
 			
 			this.people.get(p.getDestination()).add(p);
