@@ -22,6 +22,7 @@ import sajas.proto.ContractNetInitiator;
 
 public class MainController extends Agent {
 	public static final int FLOORNUM = 21;
+	public static final String REQTYPE = "SIMPLE"; //SIMPLE, DIRECTIONAL or SPECIFIC
 	
 	
 	public static ArrayList<ArrayList<Person>> peopleAtFloors = new ArrayList< ArrayList<Person>>(FLOORNUM);	
@@ -68,12 +69,14 @@ public class MainController extends Agent {
 					
 					int floor = RandomHelper.nextIntFromTo(0, FLOORNUM+9 );
 					if (floor < 10) {
-						MainController.peopleAtFloors.get(0).add(new Person(randomDestination(0)));
-						createRequest(0);
+						int personDestination = randomDestination(0);
+						MainController.peopleAtFloors.get(0).add(new Person(personDestination));
+						createRequest(0, personDestination);
 					} else {
 						int destination = floor -10;
-						MainController.peopleAtFloors.get(destination).add(new Person(randomDestination(destination)));						
-						createRequest(destination);
+						int personDestination = randomDestination(destination);
+						MainController.peopleAtFloors.get(destination).add(new Person(personDestination));						
+						createRequest(destination, personDestination);
 					}
 				}
 			}
@@ -87,10 +90,25 @@ public class MainController extends Agent {
 	}
 	
 	
-	public void createRequest(int floor) {
+	public void createRequest(int floor, int targetFloor) {
 		try {
 			ACLMessage request = new ACLMessage(ACLMessage.CFP);
-			request.setContent(Integer.toString(floor));
+			
+			if(REQTYPE.equals("SIMPLE")){
+				request.setContent( "SIMPLE" + " " + Integer.toString(floor));
+			}
+			else if(REQTYPE.equals("DIRECTIONAL")){
+				if(targetFloor > floor){
+					request.setContent( "UP" + " " + Integer.toString(floor));
+				}
+				else{
+					request.setContent("DOWN" + " " + Integer.toString(floor));
+				}
+			}
+			else if(REQTYPE.equals("SPECIFIC")){
+				
+			}
+			
 			request.setConversationId(randomStr());
 			request.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
 			request.setReplyByDate(new Date(System.currentTimeMillis() + 1000));

@@ -51,8 +51,6 @@ public class BasicElevatorModel extends Agent{
 	  
 
 	private MessageTemplate template = MessageTemplate.MatchPerformative(ACLMessage.CFP);
-
-
 	
 	public BasicElevatorModel(int timeBetweenFloors, int maxLoad, int startingX){
 		this.timeBetweenFloors = timeBetweenFloors;
@@ -157,28 +155,6 @@ public class BasicElevatorModel extends Agent{
 	  			
 	  		});
 		}
-	  		
-//	  		addBehaviour(new CyclicBehaviour(this){
-//
-//				@Override
-//				public void action() {
-//					ACLMessage msg = myAgent.receive(template);
-//					if(msg != null){
-//						
-//						/*floors.add(Integer.parseInt(msg.getContent()));
-//						Logger.writeToLog(getLocalName() + " Received request to go to " + msg.getContent()); 
-//						searchNextObjective();*/
-//
-//						ACLMessage reply = msg.createReply();
-//						int floorToStop = Integer.parseInt(msg.getContent());
-//						double heuristicScore = calculateScore(floorToStop);
-//						reply.setPerformative(ACLMessage.PROPOSE);
-//						reply.setContent(getLocalName() + " " + heuristicScore);
-//						myAgent.send(reply);
-//					}
-//				}
-//	  		});
-//	  	}
 	  	catch (FIPAException fe) {
 	  		fe.printStackTrace();
 	  	}
@@ -186,7 +162,7 @@ public class BasicElevatorModel extends Agent{
 		addBehaviour(new ContractNetResponder(this, template) {
 			protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
 				System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
-				int proposal = calculateScore(Integer.parseInt(cfp.getContent()));
+				int proposal = calculateScore(cfp.getContent());
 				// We provide a proposal
 				System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
 				ACLMessage propose = cfp.createReply();
@@ -198,7 +174,7 @@ public class BasicElevatorModel extends Agent{
 			@Override
 			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
 				System.out.println("Agent "+getLocalName()+": Proposal accepted");
-				if (BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent()))) {
+				if (BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent().split(" ")[1]))) {
 					System.out.println("Agent "+getLocalName()+": Action successfully performed");
 					ACLMessage inform = accept.createReply();
 					inform.setPerformative(ACLMessage.INFORM);
@@ -217,16 +193,30 @@ public class BasicElevatorModel extends Agent{
 	}
 	
 	
-	public int calculateScore(int target){
-		if((this.currentFloor < target && this.state.equals(Movement.UP)) || (this.currentFloor > target && this.state.equals(Movement.DOWN))){
-			return Integer.MAX_VALUE;
+	public int calculateScore(String request){
+		String[] processedReq = request.split(" ");
+		int target = Integer.parseInt(processedReq[1]);
+		switch(processedReq[0]){
+			case "SIMPLE":
+				if((this.currentFloor < target && this.state.equals(Movement.UP)) || (this.currentFloor > target && this.state.equals(Movement.DOWN))){
+					return Integer.MAX_VALUE;
+				}
+				
+				if(target == this.currentFloor){
+					return 0;
+				}
+				
+				return Math.abs(target - this.currentFloor);
+			case "UP":
+				break;
+			case "DOWN":
+				break;
+			case "SPECIFIC":
+				break;
+			default:
+				break;
 		}
-		
-		if(target == this.currentFloor){
-			return 0;
-		}
-		
-		return Math.abs(target - this.currentFloor);
+		return -1;
 	}
 	
 	
