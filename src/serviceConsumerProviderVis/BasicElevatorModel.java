@@ -37,6 +37,7 @@ public class BasicElevatorModel extends Agent{
 	private int maxLoad = 500; //kg
 	private LinkedHashSet<Integer> floors;
 	private HashMap<Integer, String> floorInfo;
+	private int idleTime; //time the elevator needs to stay at a floor for everyone to get in/out
 	public ArrayList<ArrayList<Person>> people = new ArrayList< ArrayList<Person>>(MainController.FLOORNUM);
 	private double currLoad;
 	public Movement state;
@@ -60,6 +61,7 @@ public class BasicElevatorModel extends Agent{
 		this.startingX = startingX;
 		this.floors = new LinkedHashSet<Integer>();
 		this.floorInfo = new HashMap<Integer, String>();
+		this.idleTime = 0;
 		this.state = Movement.NONE;
 		for(int i = 0; i < MainController.FLOORNUM; i++){
 			people.add(new ArrayList<Person>());
@@ -68,9 +70,9 @@ public class BasicElevatorModel extends Agent{
 	}
 	
 	public void setup(){
-		System.out.println("Elevator " + getLocalName() + " coming online");
 		
-		Logger.writeToLog(getLocalName() + " coming online");
+		
+		Logger.writeAndPrint(getLocalName() + " coming online");
 		
 		this.context = ContextUtils.getContext((Object)this);
 		this.space = (ContinuousSpace) context.getProjection("space");
@@ -93,20 +95,22 @@ public class BasicElevatorModel extends Agent{
 				@Override
 				protected void onTick() {
 					NdPoint currPos = space.getLocation(this.myAgent);
-					System.out.println("Objectivo: " + BasicElevatorModel.this.currentObjective);
-					System.out.println("Andar atual: "+ currPos.getY());
-					System.out.println("Peso atual: " + BasicElevatorModel.this.currLoad);
-					System.out.print("[");
+					String taskList = "";
 					for(int val: BasicElevatorModel.this.floors){
-						System.out.print(val+", ");
+						taskList += val+", ";
 					}
-					System.out.print("]\n");
-					System.out.println("Numero de pessoas dentro: " + BasicElevatorModel.this.getNumPeople());
-					System.out.println("Tempo total: " + totalTime);
+					Logger.writeAndPrint(getLocalName() + ": \n" + 
+										"Objetivo: " +  BasicElevatorModel.this.currentObjective + "\n" +
+										"Andar atual: " + currPos.getY() + "\n" + 
+										"Peso atual: " + BasicElevatorModel.this.currLoad + "\n"+
+										"Lista de tarefas: " + "\n[" + taskList +  "]\n" +
+										"Passageiros: " + BasicElevatorModel.this.getNumPeople() + "\n\n\n");
+		
+					/*System.out.println("Tempo total: " + totalTime);
 					System.out.println("Tempo em que esteve vazio: " + emptyTime);
 					System.out.println("Tempo com pessoas: " + withPeopleTime);
 					System.out.println("Tempo parado: " + stoppedTime);
-					System.out.println("Tempo em andamento: " + courseTime);
+					System.out.println("Tempo em andamento: " + courseTime);*/
 					 					
 					totalTime++;
 					if (BasicElevatorModel.this.getNumPeople() == 0)
@@ -120,14 +124,15 @@ public class BasicElevatorModel extends Agent{
 					else
 						courseTime++;
 					
-					
+					if(BasicElevatorModel.this.idleTime != 0){
+						BasicElevatorModel.this.idleTime--;
+						Logger.writeAndPrint(getLocalName() + ": Parado por haver pessoas a entrar e sair");
+						return;
+					}
 					
 					
 					if(BasicElevatorModel.this.currentObjective >= 0){
 						if(currPos.getY() == currentObjective){
-							
-							Logger.writeToLog(getLocalName() + " Reached objective floor: " + BasicElevatorModel.this.currentFloor + " with " 
-							+ BasicElevatorModel.this.getNumPeople() + " people");
 							
 							ejectPassengers(BasicElevatorModel.this.currentFloor);
 							getNewPassengers(BasicElevatorModel.this.currentFloor);
@@ -136,10 +141,13 @@ public class BasicElevatorModel extends Agent{
 							BasicElevatorModel.this.floorInfo.remove(currentObjective);
 							
 							searchNextObjective();
-							Logger.writeToLog(getLocalName() + " leaving floor with " + BasicElevatorModel.this.getNumPeople() + " peoples");
-							
-
 						}
+						if(BasicElevatorModel.this.idleTime != 0){
+							BasicElevatorModel.this.idleTime--;
+							Logger.writeAndPrint(getLocalName() + ": Parado por haver pessoas a entrar e sair");
+							return;
+						}
+						
 						if(BasicElevatorModel.this.state == Movement.UP){	
 							space.moveTo(this.myAgent, currPos.getX(), currPos.getY()+1);
 							BasicElevatorModel.this.currentFloor++;
@@ -151,7 +159,7 @@ public class BasicElevatorModel extends Agent{
 					}
 					else{
 						searchNextObjective();
-						System.out.println("Novo Objectivo: " + BasicElevatorModel.this.currentObjective);
+						Logger.writeAndPrint(getLocalName() + " - Novo Objectivo: " + BasicElevatorModel.this.currentObjective);
 					}
 						
 					System.out.print("\n\n\n\n\n\n\n");
@@ -165,10 +173,10 @@ public class BasicElevatorModel extends Agent{
 		
 		addBehaviour(new ContractNetResponder(this, template) {
 			protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
-				System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
+				Logger.writeAndPrint(getLocalName()+": Recebi este pedido: "+cfp.getContent());
 				int proposal = calculateScore(cfp.getContent());
 				// We provide a proposal
-				System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
+				Logger.writeAndPrint(getLocalName()+":  propoe " +proposal);
 				ACLMessage propose = cfp.createReply();
 				propose.setPerformative(ACLMessage.PROPOSE);
 				propose.setContent(String.valueOf(proposal));
@@ -177,23 +185,21 @@ public class BasicElevatorModel extends Agent{
 			
 			@Override
 			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
-				System.out.println("Agent "+getLocalName()+": Proposal accepted");
+				Logger.writeAndPrint(getLocalName()+": A proposta foi aceite");
 				if (BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent().split(" ")[1]))) {
 					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), cfp.getContent().split(" ")[0]);
-					
-					System.out.println("Agent "+getLocalName()+": Action successfully performed");
 					ACLMessage inform = accept.createReply();
 					inform.setPerformative(ACLMessage.INFORM);
 					return inform;
 				}
 				else {
-					System.out.println("Agent "+getLocalName()+": Action execution failed");
+					Logger.writeAndPrint(getLocalName()+": Nao conseguiu acrescentar o pedido à lista");
 					throw new FailureException("unexpected-error");
 				}	
 			}
 
 			protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-				System.out.println("Agent "+getLocalName()+": Proposal rejected");
+				Logger.writeAndPrint(getLocalName()+": A proposta foi rejeitada");
 			}
 		});
 	}
@@ -205,7 +211,7 @@ public class BasicElevatorModel extends Agent{
 		switch(processedReq[0]){
 			case "SIMPLE":
 				if((this.currentFloor < target && this.state.equals(Movement.UP)) || (this.currentFloor > target && this.state.equals(Movement.DOWN))){
-					return Integer.MAX_VALUE;
+					return Integer.MAX_VALUE - 1;
 				}
 				
 				if(target == this.currentFloor){
@@ -217,7 +223,7 @@ public class BasicElevatorModel extends Agent{
 			
 			case "UP": //tá merda 
 				if(this.state.equals(Movement.DOWN)){
-					return Integer.MAX_VALUE;
+					return Integer.MAX_VALUE - 1;
 				}
 				
 				if(target == this.currentFloor){
@@ -229,7 +235,7 @@ public class BasicElevatorModel extends Agent{
 				
 			case "DOWN": //tá merda
 				if(this.state.equals(Movement.UP)){
-					return Integer.MAX_VALUE;
+					return Integer.MAX_VALUE - 1;
 				}
 				
 				if(target == this.currentFloor){
@@ -273,13 +279,12 @@ public class BasicElevatorModel extends Agent{
 			
 		}
 		else if (result == -1){
-			System.out.println("nao tenho mais nada para fazer");
+			Logger.writeAndPrint(getLocalName() + ": Nada para fazer");
 			this.state = Movement.NONE;
 		}
 		
 		this.currentObjective = result;
-		System.out.println("Novo Objectivo: " + this.currentObjective);
-		Logger.writeToLog("Calculated new Objective: " + this.currentObjective);
+		
 	}
 	
 	//for testing purposes only
@@ -322,8 +327,9 @@ public class BasicElevatorModel extends Agent{
 	private void ejectPassengers(int floor){
 		ListIterator<Person> it = this.people.get(floor).listIterator();
 		while(it.hasNext()){
-			System.out.println("VAI SAIR UM MANO ---------------------------------------------------------------------------");			
+					
 			this.currLoad -= it.next().getWeight();
+			this.idleTime++;
 			it.remove();
 		}
 	}
@@ -340,14 +346,16 @@ public class BasicElevatorModel extends Agent{
 			if(this.currLoad + p.getWeight() >= this.maxLoad){
 				break;
 			}
-			System.out.println("VAI ENTRAR UM MANO -----------------------------------------------------------------------");
+			
 			if(reqInfo.equals("SIMPLE") || (reqInfo.equals("UP") && p.getDestination() > floor) || (reqInfo.equals("DOWN") && p.getDestination() < floor)){
 				this.currLoad += p.getWeight();
 				this.people.get(p.getDestination()).add(p);
 				this.floors.add(p.getDestination());
+				this.idleTime++;
+				Logger.writeAndPrint(getLocalName() + ": Entrou uma pessoa com objetivo: " + p.getDestination());
 			}
 			it.remove();
-			Logger.writeToLog("Person came in with objective: " + p.getDestination());
+			
 		}
 	}
 	

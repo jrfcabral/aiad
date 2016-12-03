@@ -26,4 +26,9 @@ public class Logger {
 			System.err.println("LOGGER: Could not write to log.");
 		}
 	}
+	
+	public synchronized static void writeAndPrint(String toLog){
+		System.out.println(toLog);
+		writeToLog(toLog);
+	}
 }
