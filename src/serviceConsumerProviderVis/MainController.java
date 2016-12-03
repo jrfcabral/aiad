@@ -22,7 +22,7 @@ import sajas.proto.ContractNetInitiator;
 
 public class MainController extends Agent {
 	public static final int FLOORNUM = 21;
-	public static final String REQTYPE = "SIMPLE"; //SIMPLE, DIRECTIONAL or SPECIFIC
+	public static final String REQTYPE = "DIRECTIONAL"; //SIMPLE, DIRECTIONAL or SPECIFIC
 	
 	
 	public static ArrayList<ArrayList<Person>> peopleAtFloors = new ArrayList< ArrayList<Person>>(FLOORNUM);	
@@ -69,14 +69,32 @@ public class MainController extends Agent {
 					
 					int floor = RandomHelper.nextIntFromTo(0, FLOORNUM+9 );
 					if (floor < 10) {
-						int personDestination = randomDestination(0);
-						MainController.peopleAtFloors.get(0).add(new Person(personDestination));
-						createRequest(0, personDestination);
+						int min = FLOORNUM, max = 0;
+						for(int i = 0; i < RandomHelper.nextIntFromTo(0, 5); i++){
+							int personDestination = randomDestination(0);
+							MainController.peopleAtFloors.get(0).add(new Person(personDestination));
+							if(min > personDestination){
+								min = personDestination;
+							}
+							if(max < personDestination){
+								max = personDestination;
+							}
+						}
+						createRequest(0, min, max);
 					} else {
 						int destination = floor -10;
-						int personDestination = randomDestination(destination);
-						MainController.peopleAtFloors.get(destination).add(new Person(personDestination));						
-						createRequest(destination, personDestination);
+						int min = FLOORNUM, max = 0;
+						for(int i = 0; i < RandomHelper.nextIntFromTo(0, 5); i++){
+							int personDestination = randomDestination(destination);
+							MainController.peopleAtFloors.get(destination).add(new Person(personDestination));
+							if(min > personDestination){
+								min = personDestination;
+							}
+							if(max < personDestination){
+								max = personDestination;
+							}
+						}
+						createRequest(destination, min, max);	
 					}
 				}
 			}
@@ -90,19 +108,24 @@ public class MainController extends Agent {
 	}
 	
 	
-	public void createRequest(int floor, int targetFloor) {
+	public void createRequest(int floor, int targetFloorMin, int targetFloorMax) {
 		try {
 			ACLMessage request = new ACLMessage(ACLMessage.CFP);
+			boolean upDown = false;
 			
 			if(REQTYPE.equals("SIMPLE")){
 				request.setContent( "SIMPLE" + " " + Integer.toString(floor));
 			}
 			else if(REQTYPE.equals("DIRECTIONAL")){
-				if(targetFloor > floor){
+				if(targetFloorMin > floor){
 					request.setContent( "UP" + " " + Integer.toString(floor));
 				}
-				else{
+				else if(targetFloorMax < floor){
 					request.setContent("DOWN" + " " + Integer.toString(floor));
+				}
+				else if(targetFloorMax > floor && targetFloorMin < floor){
+					upDown = true;
+					request.setContent("UP" + " " + Integer.toString(floor));
 				}
 			}
 			else if(REQTYPE.equals("SPECIFIC")){
@@ -131,55 +154,28 @@ public class MainController extends Agent {
 				System.out.println("Catastrophic failure!!");
 			}
 			
-			addBehaviour(new ContractNetInitiator(this, request){
-				protected void handlePropose(ACLMessage propose, Vector v) {
-					System.out.println("Agent "+propose.getSender().getName()+" proposed "+propose.getContent());
-				}
+			startProtocol(request);
+			
+			if(upDown){
+				ACLMessage req2 = new ACLMessage(ACLMessage.CFP);
+				req2.setContent("DOWN" + " " + Integer.toString(floor));
+				req2.setConversationId(randomStr());
+				req2.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+				req2.setReplyByDate(new Date(System.currentTimeMillis() + 1000));
 				
-				protected void handleRefuse(ACLMessage refuse) {
-					System.out.println("Agent "+refuse.getSender().getName()+" refused");
-				}
-				
-				protected void handleFailure(ACLMessage failure) {
-					if (failure.getSender().equals(myAgent.getAMS())) {
-						// FAILURE notification from the JADE runtime: the receiver
-						// does not exist
-						System.out.println("Responder does not exist");
+				if(elevators.length > 0){
+					for(DFAgentDescription dfd: elevators){
+						System.out.println("Found " + dfd.getName());
+						req2.addReceiver(dfd.getName());
 					}
-					else {
-						System.out.println("Agent "+failure.getSender().getName()+" failed");
-					}
-					// Immediate failure --> we will not receive a response from this agent
 				}
-				
-				protected void handleAllResponses(Vector responses, Vector acceptances) {
-					// Evaluate proposals.
-					int bestProposal = Integer.MAX_VALUE;
-					jade.core.AID bestProposer = null;
-					ACLMessage accept = null;
-					Enumeration e = responses.elements();
-					while (e.hasMoreElements()) {
-						ACLMessage msg = (ACLMessage) e.nextElement();
-						if (msg.getPerformative() == ACLMessage.PROPOSE) {
-							ACLMessage reply = msg.createReply();
-							reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
-							acceptances.addElement(reply);
-							int proposal = Integer.parseInt(msg.getContent());
-							if (proposal < bestProposal) {
-								bestProposal = proposal;
-								bestProposer = (jade.core.AID) msg.getSender();
-								accept = reply;
-							}
-						}
-					}
-					// Accept the proposal of the best proposer
-					if (accept != null) {
-						System.out.println("Accepting proposal "+bestProposal+" from responder "+bestProposer.getName());
-						accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-					}						
+				else{
+					System.out.println("Catastrophic failure!!");
 				}
-				
-			});
+				startProtocol(req2);
+			}
+			
+			
 			
 		} catch (FIPAException e) {
 			// TODO Auto-generated catch block
@@ -187,6 +183,57 @@ public class MainController extends Agent {
 		}
 	}
 	
+	public void startProtocol(ACLMessage request){
+		addBehaviour(new ContractNetInitiator(this, request){
+			protected void handlePropose(ACLMessage propose, Vector v) {
+				System.out.println("Agent "+propose.getSender().getName()+" proposed "+propose.getContent());
+			}
+			
+			protected void handleRefuse(ACLMessage refuse) {
+				System.out.println("Agent "+refuse.getSender().getName()+" refused");
+			}
+			
+			protected void handleFailure(ACLMessage failure) {
+				if (failure.getSender().equals(myAgent.getAMS())) {
+					// FAILURE notification from the JADE runtime: the receiver
+					// does not exist
+					System.out.println("Responder does not exist");
+				}
+				else {
+					System.out.println("Agent "+failure.getSender().getName()+" failed");
+				}
+				// Immediate failure --> we will not receive a response from this agent
+			}
+			
+			protected void handleAllResponses(Vector responses, Vector acceptances) {
+				// Evaluate proposals.
+				int bestProposal = Integer.MAX_VALUE;
+				jade.core.AID bestProposer = null;
+				ACLMessage accept = null;
+				Enumeration e = responses.elements();
+				while (e.hasMoreElements()) {
+					ACLMessage msg = (ACLMessage) e.nextElement();
+					if (msg.getPerformative() == ACLMessage.PROPOSE) {
+						ACLMessage reply = msg.createReply();
+						reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+						acceptances.addElement(reply);
+						int proposal = Integer.parseInt(msg.getContent());
+						if (proposal < bestProposal) {
+							bestProposal = proposal;
+							bestProposer = (jade.core.AID) msg.getSender();
+							accept = reply;
+						}
+					}
+				}
+				// Accept the proposal of the best proposer
+				if (accept != null) {
+					System.out.println("Accepting proposal "+bestProposal+" from responder "+bestProposer.getName());
+					accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+				}						
+			}
+			
+		});
+	}
 	
 	public void takeDown() {
 		System.out.println("VAI TUDO ABAIXOOOOOO");

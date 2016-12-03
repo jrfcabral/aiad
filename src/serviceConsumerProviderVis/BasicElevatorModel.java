@@ -1,6 +1,7 @@
 package serviceConsumerProviderVis;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.ListIterator;
 
@@ -35,6 +36,7 @@ public class BasicElevatorModel extends Agent{
 	private int timeBetweenFloors = 1000; //millis
 	private int maxLoad = 500; //kg
 	private LinkedHashSet<Integer> floors;
+	private HashMap<Integer, String> floorInfo;
 	public ArrayList<ArrayList<Person>> people = new ArrayList< ArrayList<Person>>(MainController.FLOORNUM);
 	private double currLoad;
 	public Movement state;
@@ -57,6 +59,7 @@ public class BasicElevatorModel extends Agent{
 		this.maxLoad = maxLoad;
 		this.startingX = startingX;
 		this.floors = new LinkedHashSet<Integer>();
+		this.floorInfo = new HashMap<Integer, String>();
 		this.state = Movement.NONE;
 		for(int i = 0; i < MainController.FLOORNUM; i++){
 			people.add(new ArrayList<Person>());
@@ -126,10 +129,11 @@ public class BasicElevatorModel extends Agent{
 							Logger.writeToLog(getLocalName() + " Reached objective floor: " + BasicElevatorModel.this.currentFloor + " with " 
 							+ BasicElevatorModel.this.getNumPeople() + " people");
 							
-							BasicElevatorModel.this.floors.remove(currentObjective);
-							
 							ejectPassengers(BasicElevatorModel.this.currentFloor);
 							getNewPassengers(BasicElevatorModel.this.currentFloor);
+							
+							BasicElevatorModel.this.floors.remove(currentObjective);
+							BasicElevatorModel.this.floorInfo.remove(currentObjective);
 							
 							searchNextObjective();
 							Logger.writeToLog(getLocalName() + " leaving floor with " + BasicElevatorModel.this.getNumPeople() + " peoples");
@@ -175,6 +179,8 @@ public class BasicElevatorModel extends Agent{
 			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
 				System.out.println("Agent "+getLocalName()+": Proposal accepted");
 				if (BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent().split(" ")[1]))) {
+					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), cfp.getContent().split(" ")[0]);
+					
 					System.out.println("Agent "+getLocalName()+": Action successfully performed");
 					ACLMessage inform = accept.createReply();
 					inform.setPerformative(ACLMessage.INFORM);
@@ -207,10 +213,32 @@ public class BasicElevatorModel extends Agent{
 				}
 				
 				return Math.abs(target - this.currentFloor);
-			case "UP":
-				break;
-			case "DOWN":
-				break;
+			
+			
+			case "UP": //tá merda 
+				if(this.state.equals(Movement.DOWN)){
+					return Integer.MAX_VALUE;
+				}
+				
+				if(target == this.currentFloor){
+					return 0;
+				}
+				
+				return Math.abs(target - this.currentFloor);
+				
+				
+			case "DOWN": //tá merda
+				if(this.state.equals(Movement.UP)){
+					return Integer.MAX_VALUE;
+				}
+				
+				if(target == this.currentFloor){
+					return 0;
+				}
+				
+				return Math.abs(target - this.currentFloor);
+				
+				
 			case "SPECIFIC":
 				break;
 			default:
@@ -297,36 +325,29 @@ public class BasicElevatorModel extends Agent{
 			System.out.println("VAI SAIR UM MANO ---------------------------------------------------------------------------");			
 			this.currLoad -= it.next().getWeight();
 			it.remove();
-			/*try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}*/
 		}
 	}
 	
 	private void getNewPassengers(int floor){
 		ListIterator<Person> it = MainController.peopleAtFloors.get(floor).listIterator();
+		String reqInfo = this.floorInfo.get(floor);
+		if(reqInfo == null){
+			return;
+		}
+		
 		while(it.hasNext()){
 			Person p = it.next();
 			if(this.currLoad + p.getWeight() >= this.maxLoad){
-				continue;
+				break;
 			}
 			System.out.println("VAI ENTRAR UM MANO -----------------------------------------------------------------------");
-			this.currLoad += p.getWeight();
-			
-			this.people.get(p.getDestination()).add(p);
-			
-			this.floors.add(p.getDestination());
+			if(reqInfo.equals("SIMPLE") || (reqInfo.equals("UP") && p.getDestination() > floor) || (reqInfo.equals("DOWN") && p.getDestination() < floor)){
+				this.currLoad += p.getWeight();
+				this.people.get(p.getDestination()).add(p);
+				this.floors.add(p.getDestination());
+			}
 			it.remove();
 			Logger.writeToLog("Person came in with objective: " + p.getDestination());
-			/*try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}*/
 		}
 	}
 	
