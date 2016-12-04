@@ -5,6 +5,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.Random;
 import java.util.Vector;
 
@@ -21,8 +22,10 @@ import sajas.domain.DFService;
 import sajas.proto.ContractNetInitiator;
 
 public class MainController extends Agent {
-	public static final int FLOORNUM = 21;
-	public static final String REQTYPE = "DIRECTIONAL"; //SIMPLE, DIRECTIONAL or SPECIFIC
+	public static int FLOORNUM = 21;
+	public static String REQTYPE = "DIRECTIONAL"; //SIMPLE, DIRECTIONAL or SPECIFIC
+	public static int ELEVATORNUM = 2;
+	public static int REQPROBABILITY = 20;
 	
 	
 	public static ArrayList<ArrayList<Person>> peopleAtFloors = new ArrayList< ArrayList<Person>>(FLOORNUM);	
@@ -64,12 +67,17 @@ public class MainController extends Agent {
 
 			@Override
 			protected void onTick() {
+				
+				increaseTimeWaiting();
+				
 				int prob = RandomHelper.nextIntFromTo(0, 100);
-				if (prob <= 20) {
+				if (prob <= REQPROBABILITY) {
 					
 					int floor = RandomHelper.nextIntFromTo(0, FLOORNUM+9 );
+					int min = FLOORNUM, max = 0;
+					LinkedList<Integer> targets = new LinkedList<Integer>();
+					
 					if (floor < 10) {
-						int min = FLOORNUM, max = 0;
 						for(int i = 0; i < RandomHelper.nextIntFromTo(0, 5); i++){
 							int personDestination = randomDestination(0);
 							MainController.peopleAtFloors.get(0).add(new Person(personDestination));
@@ -79,11 +87,11 @@ public class MainController extends Agent {
 							if(max < personDestination){
 								max = personDestination;
 							}
+							targets.add(personDestination);
 						}
-						createRequest(0, min, max);
+						createRequest(0, min, max, targets);
 					} else {
 						int destination = floor -10;
-						int min = FLOORNUM, max = 0;
 						for(int i = 0; i < RandomHelper.nextIntFromTo(0, 5); i++){
 							int personDestination = randomDestination(destination);
 							MainController.peopleAtFloors.get(destination).add(new Person(personDestination));
@@ -93,8 +101,9 @@ public class MainController extends Agent {
 							if(max < personDestination){
 								max = personDestination;
 							}
+							targets.add(personDestination);
 						}
-						createRequest(destination, min, max);	
+						createRequest(destination, min, max, targets);	
 					}
 				}
 			}
@@ -107,43 +116,72 @@ public class MainController extends Agent {
 		return new BigInteger(130, rand).toString(64);
 	}
 	
+	public void increaseTimeWaiting(){
+		for(int i = 0; i < FLOORNUM; i++){
+			ArrayList<Person> people = this.peopleAtFloors.get(i);
+			for(Person p: people){
+				p.timeWaiting++;
+			}
+		}
+	}
 	
-	public void createRequest(int floor, int targetFloorMin, int targetFloorMax) {
-		try {
-			ACLMessage request = new ACLMessage(ACLMessage.CFP);
-			boolean upDown = false;
-			
+	
+	public void createRequest(int floor, int targetFloorMin, int targetFloorMax, LinkedList<Integer> targets) {
 			if(REQTYPE.equals("SIMPLE")){
+				ACLMessage request = new ACLMessage(ACLMessage.CFP);
 				request.setContent( "SIMPLE" + " " + Integer.toString(floor));
+				completeMessageAndSend(request);
 			}
 			else if(REQTYPE.equals("DIRECTIONAL")){
+				
 				if(targetFloorMin > floor){
+					ACLMessage request = new ACLMessage(ACLMessage.CFP);
 					request.setContent( "UP" + " " + Integer.toString(floor));
+					completeMessageAndSend(request);
 				}
 				else if(targetFloorMax < floor){
+					ACLMessage request = new ACLMessage(ACLMessage.CFP);
 					request.setContent("DOWN" + " " + Integer.toString(floor));
+					completeMessageAndSend(request);
+					
 				}
 				else if(targetFloorMax > floor && targetFloorMin < floor){
-					upDown = true;
+					ACLMessage request = new ACLMessage(ACLMessage.CFP);
 					request.setContent("UP" + " " + Integer.toString(floor));
+					completeMessageAndSend(request);
+					
+					ACLMessage request2 = new ACLMessage(ACLMessage.CFP);
+					request2.setContent("DOWN" + " " + Integer.toString(floor));
+					completeMessageAndSend(request2);
 				}
 			}
 			else if(REQTYPE.equals("SPECIFIC")){
-				
+				for(Integer i: targets){
+					ACLMessage request = new ACLMessage(ACLMessage.CFP);
+					request.setContent("SPECIFIC" + " " + Integer.toString(floor) + i.intValue());
+					completeMessageAndSend(request);
+				}
 			}
-			
+	}
+	
+	
+	public void completeMessageAndSend(ACLMessage request){
+		try {
 			request.setConversationId(randomStr());
 			request.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
 			request.setReplyByDate(new Date(System.currentTimeMillis() + 1000));
-			
+		
 			DFAgentDescription agentDesc = new DFAgentDescription();
 			ServiceDescription serviceDesc = new ServiceDescription();
-
+			
 			serviceDesc.setType("Elevator");
 			agentDesc.addServices(serviceDesc);
 
-			DFAgentDescription[] elevators = DFService.search(this, agentDesc, null);
-			
+			DFAgentDescription[] elevators;
+		
+			elevators = DFService.search(this, agentDesc, null);
+		
+		
 			if(elevators.length > 0){
 				for(DFAgentDescription dfd: elevators){
 					System.out.println("Found " + dfd.getName());
@@ -153,34 +191,13 @@ public class MainController extends Agent {
 			else{
 				System.out.println("Catastrophic failure!!");
 			}
-			
-			startProtocol(request);
-			
-			if(upDown){
-				ACLMessage req2 = new ACLMessage(ACLMessage.CFP);
-				req2.setContent("DOWN" + " " + Integer.toString(floor));
-				req2.setConversationId(randomStr());
-				req2.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
-				req2.setReplyByDate(new Date(System.currentTimeMillis() + 1000));
-				
-				if(elevators.length > 0){
-					for(DFAgentDescription dfd: elevators){
-						System.out.println("Found " + dfd.getName());
-						req2.addReceiver(dfd.getName());
-					}
-				}
-				else{
-					System.out.println("Catastrophic failure!!");
-				}
-				startProtocol(req2);
-			}
-			
-			
-			
 		} catch (FIPAException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		startProtocol(request);
+		
 	}
 	
 	public void startProtocol(ACLMessage request){

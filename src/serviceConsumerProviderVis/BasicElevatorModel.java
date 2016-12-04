@@ -46,6 +46,8 @@ public class BasicElevatorModel extends Agent{
 	public ContinuousSpace space;
 	public Grid grid;
 	public int startingX;
+	
+	
 	public int emptyTime = 0; //ticks/seconds 
 	public int withPeopleTime = 0; //ticks/seconds
 	public int stoppedTime = 0; // ticks/seconds
@@ -135,7 +137,11 @@ public class BasicElevatorModel extends Agent{
 						if(currPos.getY() == currentObjective){
 							
 							ejectPassengers(BasicElevatorModel.this.currentFloor);
+							
+							increaseTimeInElevator();
+							
 							getNewPassengers(BasicElevatorModel.this.currentFloor);
+							
 							
 							BasicElevatorModel.this.floors.remove(currentObjective);
 							BasicElevatorModel.this.floorInfo.remove(currentObjective);
@@ -204,6 +210,15 @@ public class BasicElevatorModel extends Agent{
 		});
 	}
 	
+	public void increaseTimeInElevator(){
+		for(int i = 0; i < MainController.FLOORNUM; i++){
+			ArrayList<Person> persons = this.people.get(i);
+			for(Person p: persons){
+				p.timeInElevator++;
+			}
+		}
+	}
+	
 	
 	public int calculateScore(String request){
 		String[] processedReq = request.split(" ");
@@ -246,7 +261,22 @@ public class BasicElevatorModel extends Agent{
 				
 				
 			case "SPECIFIC":
-				break;
+				if(Integer.parseInt(processedReq[2]) < this.currentFloor){
+					if(this.state.equals(Movement.UP)){
+						return Integer.MAX_VALUE - 1;
+					}
+					else{
+						return Math.abs(target - this.currentFloor);
+					}
+				}
+				else{
+					if(this.state.equals(Movement.DOWN)){
+						return Integer.MAX_VALUE - 1;
+					}
+					else{
+						return Math.abs(target - this.currentFloor);
+					}
+				}
 			default:
 				break;
 		}
@@ -279,11 +309,12 @@ public class BasicElevatorModel extends Agent{
 			
 		}
 		else if (result == -1){
-			Logger.writeAndPrint(getLocalName() + ": Nada para fazer");
+			
 			this.state = Movement.NONE;
 		}
 		
 		this.currentObjective = result;
+		Logger.writeAndPrint(getLocalName() + ": novo objetivo: " + this.currentObjective);
 		
 	}
 	
@@ -327,8 +358,9 @@ public class BasicElevatorModel extends Agent{
 	private void ejectPassengers(int floor){
 		ListIterator<Person> it = this.people.get(floor).listIterator();
 		while(it.hasNext()){
-					
-			this.currLoad -= it.next().getWeight();
+			Person p = it.next();
+			Logger.writeToStat("Time waiting for the elevator: " + p.timeWaiting + "\nTime in elevator: " + p.timeInElevator + "\n");
+			this.currLoad -= p.getWeight();
 			this.idleTime++;
 			it.remove();
 		}
@@ -344,7 +376,7 @@ public class BasicElevatorModel extends Agent{
 		while(it.hasNext()){
 			Person p = it.next();
 			if(this.currLoad + p.getWeight() >= this.maxLoad){
-				break;
+				continue;
 			}
 			
 			if(reqInfo.equals("SIMPLE") || (reqInfo.equals("UP") && p.getDestination() > floor) || (reqInfo.equals("DOWN") && p.getDestination() < floor)){
@@ -353,8 +385,9 @@ public class BasicElevatorModel extends Agent{
 				this.floors.add(p.getDestination());
 				this.idleTime++;
 				Logger.writeAndPrint(getLocalName() + ": Entrou uma pessoa com objetivo: " + p.getDestination());
+				it.remove();
 			}
-			it.remove();
+			
 			
 		}
 	}

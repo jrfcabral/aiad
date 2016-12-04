@@ -15,6 +15,7 @@ import repast.simphony.space.grid.Grid;
 import repast.simphony.space.grid.GridBuilderParameters;
 import repast.simphony.space.grid.SimpleGridAdder;
 import repast.simphony.space.grid.WrapAroundBorders;
+import repast.simphony.ui.RSApplication;
 import repast.simphony.util.ContextUtils;
 import sajas.core.Agent;
 import sajas.core.Runtime;
@@ -45,9 +46,8 @@ public class RepastSServiceConsumerProviderLauncher extends RepastSLauncher {
 		try {
 			MainController main = new MainController();
 			mainContainer.acceptNewAgent("Main", main).start();
-			int numElevators = 2;
-			for(int i = 0;  i < numElevators; i++){
-				BasicElevatorModel elevator = new BasicElevatorModel(1000, 500, (50/numElevators)*(i+1));
+			for(int i = 0;  i < MainController.ELEVATORNUM; i++){
+				BasicElevatorModel elevator = new BasicElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1));
 				mainContainer.acceptNewAgent("Elevator"+i, elevator).start();
 			} 
 		}
@@ -59,6 +59,8 @@ public class RepastSServiceConsumerProviderLauncher extends RepastSLauncher {
 
 	@Override
 	public Context build(Context<Object> context) {
+		UserPanel up = new UserPanel();
+		RSApplication.getRSApplicationInstance().addCustomUserPanel(up.createPanel());
 		// http://repast.sourceforge.net/docs/RepastJavaGettingStarted.pdf
 
 		ContinuousSpaceFactory spaceFactory = ContinuousSpaceFactoryFinder.createContinuousSpaceFactory(null);
