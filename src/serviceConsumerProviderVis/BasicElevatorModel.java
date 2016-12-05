@@ -32,6 +32,8 @@ public class BasicElevatorModel extends Agent{
 		NONE, UP, DOWN
 	}
 	
+	public static String WEIGHTMODEL="NONE";
+	
 	private int currentFloor = 10;
 	private int timeBetweenFloors = 1000; //millis
 	private int maxLoad = 500; //kg
@@ -199,7 +201,7 @@ public class BasicElevatorModel extends Agent{
 					return inform;
 				}
 				else {
-					Logger.writeAndPrint(getLocalName()+": Nao conseguiu acrescentar o pedido à lista");
+					Logger.writeAndPrint(getLocalName()+": Nao conseguiu acrescentar o pedido ï¿½ lista");
 					throw new FailureException("unexpected-error");
 				}	
 			}
@@ -223,45 +225,86 @@ public class BasicElevatorModel extends Agent{
 	public int calculateScore(String request){
 		String[] processedReq = request.split(" ");
 		int target = Integer.parseInt(processedReq[1]);
+		int simpleScore = 0;
 		switch(processedReq[0]){
-			case "SIMPLE":
+			case "SIMPLE":	
 				if((this.currentFloor < target && this.state.equals(Movement.UP)) || (this.currentFloor > target && this.state.equals(Movement.DOWN))){
-					return Integer.MAX_VALUE - 1;
+					simpleScore = MainController.FLOORNUM;
 				}
-				
-				if(target == this.currentFloor){
-					return 0;
+				else{
+					simpleScore = MainController.FLOORNUM - Math.abs(this.currentFloor - target);
 				}
-				
-				return Math.abs(target - this.currentFloor);
+				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
+					if(this.currLoad >= this.maxLoad - 40){
+						simpleScore += 10;
+					}
+				}
+				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
+					simpleScore += (this.currLoad/this.maxLoad)*10;
+				}
 			
+			case "UP": 
+				if(!this.state.equals(Movement.DOWN) && this.currentFloor < target){
+					simpleScore += (MainController.FLOORNUM + 5) - Math.abs(this.currentFloor - target);
+				}
+				else if(!this.state.equals(Movement.DOWN) && this.currentFloor >= target){
+					simpleScore += (MainController.FLOORNUM + 2) - Math.abs(this.currentFloor - target);
+				}
+				else{
+					simpleScore += MainController.FLOORNUM;
+				}
+				
+				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
+					if(this.currLoad >= this.maxLoad - 40){
+						simpleScore += 10;
+					}
+				}
+				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
+					simpleScore += (this.currLoad/this.maxLoad)*10;
+				}
 			
-			case "UP": //tá merda 
-				if(this.state.equals(Movement.DOWN)){
-					return Integer.MAX_VALUE - 1;
+			case "DOWN":
+				if(!this.state.equals(Movement.UP) && this.currentFloor > target){
+					simpleScore = (MainController.FLOORNUM + 5) - Math.abs(this.currentFloor - target);
+				}
+				else if(!this.state.equals(Movement.UP) && this.currentFloor <= target) {
+					simpleScore += (MainController.FLOORNUM + 2) - Math.abs(this.currentFloor - target);
+				}
+				else{
+					simpleScore += MainController.FLOORNUM;
 				}
 				
-				if(target == this.currentFloor){
-					return 0;
+				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
+					if(this.currLoad >= this.maxLoad - 40){
+						simpleScore += 10;
+					}
 				}
-				
-				return Math.abs(target - this.currentFloor);
-				
-				
-			case "DOWN": //tá merda
-				if(this.state.equals(Movement.UP)){
-					return Integer.MAX_VALUE - 1;
-				}
-				
-				if(target == this.currentFloor){
-					return 0;
-				}
-				
-				return Math.abs(target - this.currentFloor);
-				
+				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
+					simpleScore += (this.currLoad/this.maxLoad)*10;
+				}				
 				
 			case "SPECIFIC":
-				if(Integer.parseInt(processedReq[2]) < this.currentFloor){
+				if(this.state.equals(Movement.UP)){
+					if(this.currentFloor >= target){
+						return 1;
+					}
+					else{
+						return 1;
+					}
+				}
+				else if(this.state.equals(Movement.DOWN)){
+					if(this.currentFloor <= target){
+						return 1;
+					}
+					else{
+						return 1;
+					}
+				}
+				else{
+					return 1;
+				}
+				
+				/*if(Integer.parseInt(processedReq[2]) < this.currentFloor){
 					if(this.state.equals(Movement.UP)){
 						return Integer.MAX_VALUE - 1;
 					}
@@ -276,7 +319,7 @@ public class BasicElevatorModel extends Agent{
 					else{
 						return Math.abs(target - this.currentFloor);
 					}
-				}
+				}*/
 			default:
 				break;
 		}
