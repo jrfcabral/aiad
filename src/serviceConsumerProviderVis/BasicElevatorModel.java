@@ -35,7 +35,7 @@ public class BasicElevatorModel extends Agent{
 	public static String WEIGHTMODEL="NONE";
 	
 	
-	private int currentFloor = 10;
+	private int currentFloor;
 	private int timeBetweenFloors = 1000; //millis
 	private int maxLoad = 500; //kg
 	private LinkedHashSet<Integer> floors;
@@ -106,7 +106,7 @@ public class BasicElevatorModel extends Agent{
 		this.grid =  (Grid) context.getProjection("grid");
 		this.currentObjective = -1;
 		space.moveTo(this, BasicElevatorModel.this.startingX, (MainController.SECTORIZATION)?(BasicElevatorModel.this.sectorBounds[1]/2):(MainController.FLOORNUM/2));
-		this.currentFloor = 10;
+		this.currentFloor = (MainController.SECTORIZATION)?(BasicElevatorModel.this.sectorBounds[1]/2):(MainController.FLOORNUM/2);
 		try {
 	  		DFAgentDescription dfd = new DFAgentDescription();
 	  		dfd.setName(getAID());
@@ -128,7 +128,7 @@ public class BasicElevatorModel extends Agent{
 					}
 					Logger.writeAndPrint(getLocalName() + ": \n" + 
 										"Objetivo: " +  BasicElevatorModel.this.currentObjective + "\n" +
-										"Andar atual: " + currPos.getY() + "\n" + 
+										"Andar atual: " + currPos.getY() + ", " + BasicElevatorModel.this.currentFloor + "\n" + 
 										"Peso atual: " + BasicElevatorModel.this.currLoad + "\n"+
 										"Lista de tarefas: " + "\n[" + taskList +  "]\n" +
 										"Passageiros: " + BasicElevatorModel.this.getNumPeople() + "\n\n\n");
