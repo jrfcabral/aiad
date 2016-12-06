@@ -34,6 +34,7 @@ public class BasicElevatorModel extends Agent{
 	
 	public static String WEIGHTMODEL="NONE";
 	
+	
 	private int currentFloor = 10;
 	private int timeBetweenFloors = 1000; //millis
 	private int maxLoad = 500; //kg
@@ -48,6 +49,7 @@ public class BasicElevatorModel extends Agent{
 	public ContinuousSpace space;
 	public Grid grid;
 	public int startingX;
+	public int[] sectorBounds = null;
 	
 	
 	public int emptyTime = 0; //ticks/seconds 
@@ -73,16 +75,37 @@ public class BasicElevatorModel extends Agent{
 
 	}
 	
+	public BasicElevatorModel(int timeBetweenFloors, int maxLoad, int startingX, int lowerSecBound, int upperSecBound){
+		this.timeBetweenFloors = timeBetweenFloors;
+		this.maxLoad = maxLoad;
+		this.startingX = startingX;
+		this.sectorBounds = new int[2];
+		this.sectorBounds[0] = lowerSecBound; this.sectorBounds[1] = upperSecBound;
+		
+		this.floors = new LinkedHashSet<Integer>();
+		this.floorInfo = new HashMap<Integer, String>();
+		this.idleTime = 0;
+		this.state = Movement.NONE;
+		for(int i = 0; i < MainController.FLOORNUM; i++){
+			people.add(new ArrayList<Person>());
+		}
+
+	}
+	
 	public void setup(){
 		
 		
 		Logger.writeAndPrint(getLocalName() + " coming online");
+		if(BasicElevatorModel.this.sectorBounds != null){
+			Logger.writeToLog(getLocalName() + " sector: " + BasicElevatorModel.this.sectorBounds[0] + " - " + BasicElevatorModel.this.sectorBounds[1]);
+		}
+		
 		
 		this.context = ContextUtils.getContext((Object)this);
 		this.space = (ContinuousSpace) context.getProjection("space");
 		this.grid =  (Grid) context.getProjection("grid");
 		this.currentObjective = -1;
-		space.moveTo(this, BasicElevatorModel.this.startingX, 10);
+		space.moveTo(this, BasicElevatorModel.this.startingX, (MainController.SECTORIZATION)?(BasicElevatorModel.this.sectorBounds[1]/2):(MainController.FLOORNUM/2));
 		this.currentFloor = 10;
 		try {
 	  		DFAgentDescription dfd = new DFAgentDescription();
@@ -242,7 +265,7 @@ public class BasicElevatorModel extends Agent{
 				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
 					simpleScore += (this.currLoad/this.maxLoad)*10;
 				}
-			
+				return simpleScore;
 			case "UP": 
 				if(!this.state.equals(Movement.DOWN) && this.currentFloor < target){
 					simpleScore += (MainController.FLOORNUM + 5) - Math.abs(this.currentFloor - target);
@@ -262,7 +285,7 @@ public class BasicElevatorModel extends Agent{
 				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
 					simpleScore += (this.currLoad/this.maxLoad)*10;
 				}
-			
+				return simpleScore;
 			case "DOWN":
 				if(!this.state.equals(Movement.UP) && this.currentFloor > target){
 					simpleScore = (MainController.FLOORNUM + 5) - Math.abs(this.currentFloor - target);
@@ -282,11 +305,11 @@ public class BasicElevatorModel extends Agent{
 				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
 					simpleScore += (this.currLoad/this.maxLoad)*10;
 				}				
-				
+				return simpleScore;
 			case "SPECIFIC":
 				if(this.state.equals(Movement.UP)){
-					if(this.currentFloor >= target){
-						return 1;
+					if(this.currentFloor >= target && Integer.parseInt(processedReq[2]) > target){
+						simpleScore += (MainController.FLOORNUM + 2) - Math.abs(this.currentFloor - target);
 					}
 					else{
 						return 1;
@@ -303,23 +326,6 @@ public class BasicElevatorModel extends Agent{
 				else{
 					return 1;
 				}
-				
-				/*if(Integer.parseInt(processedReq[2]) < this.currentFloor){
-					if(this.state.equals(Movement.UP)){
-						return Integer.MAX_VALUE - 1;
-					}
-					else{
-						return Math.abs(target - this.currentFloor);
-					}
-				}
-				else{
-					if(this.state.equals(Movement.DOWN)){
-						return Integer.MAX_VALUE - 1;
-					}
-					else{
-						return Math.abs(target - this.currentFloor);
-					}
-				}*/
 			default:
 				break;
 		}

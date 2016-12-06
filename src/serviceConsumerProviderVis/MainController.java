@@ -26,6 +26,7 @@ public class MainController extends Agent {
 	public static String REQTYPE = "DIRECTIONAL"; //SIMPLE, DIRECTIONAL or SPECIFIC
 	public static int ELEVATORNUM = 2;
 	public static int REQPROBABILITY = 20;
+	public static boolean SECTORIZATION	= true;
 	
 	
 	public static ArrayList<ArrayList<Person>> peopleAtFloors = new ArrayList< ArrayList<Person>>(FLOORNUM);	

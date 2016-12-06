@@ -47,7 +47,13 @@ public class RepastSServiceConsumerProviderLauncher extends RepastSLauncher {
 			MainController main = new MainController();
 			mainContainer.acceptNewAgent("Main", main).start();
 			for(int i = 0;  i < MainController.ELEVATORNUM; i++){
-				BasicElevatorModel elevator = new BasicElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1));
+				BasicElevatorModel elevator;
+				if(!MainController.SECTORIZATION){
+					elevator = new BasicElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1));
+				}
+				else{
+					elevator = new BasicElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1), (MainController.FLOORNUM/MainController.ELEVATORNUM)*i, (MainController.FLOORNUM/MainController.ELEVATORNUM)*(i+1));
+				}
 				mainContainer.acceptNewAgent("Elevator"+i, elevator).start();
 			} 
 		}
