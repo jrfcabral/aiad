@@ -107,8 +107,8 @@ public class BasicElevatorModel extends Agent{
 		this.space = (ContinuousSpace) context.getProjection("space");
 		this.grid =  (Grid) context.getProjection("grid");
 		this.currentObjective = -1;
-		space.moveTo(this, BasicElevatorModel.this.startingX, (MainController.SECTORIZATION)?(BasicElevatorModel.this.sectorBounds[1]/2):(MainController.FLOORNUM/2));
-		this.currentFloor = (MainController.SECTORIZATION)?(BasicElevatorModel.this.sectorBounds[1]/2):(MainController.FLOORNUM/2);
+		space.moveTo(this, BasicElevatorModel.this.startingX, (MainController.SECTORIZATION)?((BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2 + BasicElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2));
+		this.currentFloor = (MainController.SECTORIZATION)?((BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2 + BasicElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2);
 		try {
 	  		DFAgentDescription dfd = new DFAgentDescription();
 	  		dfd.setName(getAID());
@@ -257,7 +257,7 @@ public class BasicElevatorModel extends Agent{
 					simpleScore = MainController.FLOORNUM;
 				}
 				else{
-					simpleScore = MainController.FLOORNUM - Math.abs(this.currentFloor - target);
+					simpleScore = Math.abs(this.currentFloor - target);
 				}
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
 					if(this.currLoad >= this.maxLoad - 40){
@@ -269,14 +269,22 @@ public class BasicElevatorModel extends Agent{
 				}
 				return simpleScore;
 			case "UP": 
-				if(!this.state.equals(Movement.DOWN) && this.currentFloor < target){
-					simpleScore += (MainController.FLOORNUM + 5) - Math.abs(this.currentFloor - target);
+				
+				try{
+					int maxObject = Collections.max(this.floors);
+					int minObject = Collections.min(this.floors);
+					if(this.state.equals(Movement.UP) && this.currentFloor < target){
+						simpleScore += Math.abs(this.currentFloor - maxObject) + Math.abs(maxObject - target);
+					}
+					else if(!this.state.equals(Movement.DOWN) && this.currentFloor >= target){
+						simpleScore += Math.abs(this.currentFloor - target);
+					}
+					else{
+						simpleScore += Math.abs(this.currentFloor - minObject) + Math.abs(minObject - target);
+					}
 				}
-				else if(!this.state.equals(Movement.DOWN) && this.currentFloor >= target){
-					simpleScore += (MainController.FLOORNUM + 2) - Math.abs(this.currentFloor - target);
-				}
-				else{
-					simpleScore += MainController.FLOORNUM;
+				catch(NoSuchElementException e ){
+					simpleScore += Math.abs(this.currentFloor - target);
 				}
 				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
@@ -289,14 +297,22 @@ public class BasicElevatorModel extends Agent{
 				}
 				return simpleScore;
 			case "DOWN":
-				if(!this.state.equals(Movement.UP) && this.currentFloor > target){
-					simpleScore = (MainController.FLOORNUM + 5) - Math.abs(this.currentFloor - target);
+				
+				try{
+					int maxObject1 = Collections.max(this.floors);
+					int minObject1 = Collections.min(this.floors);
+					if(this.state.equals(Movement.DOWN) && this.currentFloor < target){
+						simpleScore += Math.abs(this.currentFloor - minObject1) + Math.abs(minObject1 - target);
+					}
+					else if(!this.state.equals(Movement.UP) && this.currentFloor >= target){
+						simpleScore += Math.abs(this.currentFloor - target);
+					}
+					else{
+						simpleScore += Math.abs(this.currentFloor - maxObject1) + Math.abs(maxObject1 - target);
+					}
 				}
-				else if(!this.state.equals(Movement.UP) && this.currentFloor <= target) {
-					simpleScore += (MainController.FLOORNUM + 2) - Math.abs(this.currentFloor - target);
-				}
-				else{
-					simpleScore += MainController.FLOORNUM;
+				catch(NoSuchElementException e){
+					simpleScore += Math.abs(this.currentFloor - target);
 				}
 				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
@@ -306,7 +322,8 @@ public class BasicElevatorModel extends Agent{
 				}
 				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
 					simpleScore += (this.currLoad/this.maxLoad)*10;
-				}				
+				}
+				
 				return simpleScore;
 			case "SPECIFIC":
 				int destination = Integer.parseInt(processedReq[2]);

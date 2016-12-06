@@ -79,7 +79,7 @@ public class MainController extends Agent {
 					LinkedList<Integer> targets = new LinkedList<Integer>();
 					
 					if (floor < 10) {
-						for(int i = 0; i < RandomHelper.nextIntFromTo(0, 5); i++){
+						for(int i = 0; i < RandomHelper.nextIntFromTo(1, 5); i++){
 							int personDestination = randomDestination(0);
 							MainController.peopleAtFloors.get(0).add(new Person(personDestination));
 							if(min > personDestination){
@@ -93,7 +93,7 @@ public class MainController extends Agent {
 						createRequest(0, min, max, targets);
 					} else {
 						int destination = floor -10;
-						for(int i = 0; i < RandomHelper.nextIntFromTo(0, 5); i++){
+						for(int i = 0; i < RandomHelper.nextIntFromTo(1, 5); i++){
 							int personDestination = randomDestination(destination);
 							MainController.peopleAtFloors.get(destination).add(new Person(personDestination));
 							if(min > personDestination){
