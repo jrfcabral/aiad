@@ -1,9 +1,11 @@
 package serviceConsumerProviderVis;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 import Util.Logger;
 import jade.domain.FIPAException;
@@ -307,25 +309,53 @@ public class BasicElevatorModel extends Agent{
 				}				
 				return simpleScore;
 			case "SPECIFIC":
-				if(this.state.equals(Movement.UP)){
-					if(this.currentFloor >= target && Integer.parseInt(processedReq[2]) > target){
-						simpleScore += (MainController.FLOORNUM + 2) - Math.abs(this.currentFloor - target);
+				int destination = Integer.parseInt(processedReq[2]);
+				int maxObj;
+				int minObj;
+				try{
+					 maxObj = Collections.max(this.floors);
+					 minObj = Collections.min(this.floors);
+					
+					if(this.state.equals(Movement.UP)){
+						if( target >= this.currentFloor && destination > target){
+							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - destination);
+						}
+						
+						else if(target <= this.currentFloor && destination < target){
+							simpleScore =  Math.abs(this.currentFloor - maxObj) + Math.abs(maxObj - target) + Math.abs(target - destination);
+						}
+						
+						else if (target <= this.currentFloor && destination > target){
+							simpleScore = Math.abs(this.currentFloor - maxObj) + Math.abs(maxObj - target) + Math.abs(target - Math.min(target, minObj)) + Math.abs(target - Math.min(target,minObj));
+						}
+						else if (target >= this.currentFloor && destination < target){
+							//return dist(elevator, call) + [ dist(call, max(objectives)) + dist(max(objectives), destination) ]
+							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - maxObj) + Math.abs(maxObj - destination);
+						}
 					}
+					else if(this.state.equals(Movement.DOWN)){
+						if(target < this.currentFloor && destination < target){
+							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - destination);
+						}
+						else if (target > this.currentFloor && destination > target){
+							simpleScore = Math.abs(minObj - this.currentFloor) + Math.abs(minObj - target) + Math.abs(target - destination);
+						}
+						else if (target > this.currentFloor && destination < target){
+							simpleScore = Math.abs(minObj - this.currentFloor) + Math.abs(minObj - target) + Math.abs(Math.max(maxObj, target) - target) + Math.abs(Math.max(maxObj, target) - destination); 
+						}
+						else if (target < this.currentFloor && destination > target){
+							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(minObj - target) + Math.abs(minObj - destination);
+						}
+					}
+					
 					else{
 						return 1;
 					}
 				}
-				else if(this.state.equals(Movement.DOWN)){
-					if(this.currentFloor <= target){
-						return 1;
-					}
-					else{
-						return 1;
-					}
+				catch(NoSuchElementException e){
+					simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - destination);
 				}
-				else{
-					return 1;
-				}
+				return simpleScore;
 			default:
 				break;
 		}
