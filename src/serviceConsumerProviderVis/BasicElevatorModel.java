@@ -130,6 +130,7 @@ public class BasicElevatorModel extends Agent{
 					}
 					Logger.writeAndPrint(getLocalName() + ": \n" + 
 										"Objetivo: " +  BasicElevatorModel.this.currentObjective + "\n" +
+										"Direcao atual: " + BasicElevatorModel.this.state + "\n" +
 										"Andar atual: " + currPos.getY() + ", " + BasicElevatorModel.this.currentFloor + "\n" + 
 										"Peso atual: " + BasicElevatorModel.this.currLoad + "\n"+
 										"Lista de tarefas: " + "\n[" + taskList +  "]\n" +
@@ -223,6 +224,7 @@ public class BasicElevatorModel extends Agent{
 					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), cfp.getContent().split(" ")[0]);
 					ACLMessage inform = accept.createReply();
 					inform.setPerformative(ACLMessage.INFORM);
+					searchNextObjective();
 					return inform;
 				}
 				else {
@@ -253,14 +255,21 @@ public class BasicElevatorModel extends Agent{
 		int simpleScore = 0;
 		switch(processedReq[0]){
 			case "SIMPLE":	
-				if((this.currentFloor < target && this.state.equals(Movement.UP)) || (this.currentFloor > target && this.state.equals(Movement.DOWN))){
-					simpleScore = MainController.FLOORNUM;
-				}
-				else{
+				if((this.currentFloor <= target && this.state.equals(Movement.UP)) || (this.currentFloor >= target && this.state.equals(Movement.DOWN)) || this.state.equals(Movement.NONE)){
 					simpleScore = Math.abs(this.currentFloor - target);
 				}
+				else if(this.state.equals(Movement.UP)){
+					int maxObject = Collections.max(this.floors);
+					simpleScore = Math.abs(this.currentFloor - maxObject) + Math.abs(maxObject - target);
+				}
+				else if(this.state.equals(Movement.DOWN)){
+					int minObject = Collections.min(this.floors);
+					simpleScore = Math.abs(this.currentFloor - minObject) + Math.abs(minObject - target);
+				}
+				
+				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
-					if(this.currLoad >= this.maxLoad - 40){
+					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += 10;
 					}
 				}
@@ -269,26 +278,28 @@ public class BasicElevatorModel extends Agent{
 				}
 				return simpleScore;
 			case "UP": 
-				
 				try{
 					int maxObject = Collections.max(this.floors);
 					int minObject = Collections.min(this.floors);
-					if(this.state.equals(Movement.UP) && this.currentFloor < target){
-						simpleScore += Math.abs(this.currentFloor - maxObject) + Math.abs(maxObject - target);
+					if(this.floorInfo.containsKey(target) && this.floorInfo.get(target).equals("DOWN")){
+						simpleScore += MainController.FLOORNUM + 10;
 					}
-					else if(!this.state.equals(Movement.DOWN) && this.currentFloor >= target){
-						simpleScore += Math.abs(this.currentFloor - target);
+					else if(this.state.equals(Movement.UP) && this.currentFloor > target){ // CASO MAIS CHATO
+						simpleScore += Math.abs(this.currentFloor - maxObject) + Math.abs(maxObject - minObject) + Math.abs(minObject - target);
+					}
+					else if(this.state.equals(Movement.DOWN)){
+						simpleScore += Math.abs(minObject - this.currentFloor) + Math.abs(target - minObject);
 					}
 					else{
-						simpleScore += Math.abs(this.currentFloor - minObject) + Math.abs(minObject - target);
+						simpleScore += Math.abs(target - this.currentFloor);
 					}
 				}
-				catch(NoSuchElementException e ){
+				catch(NoSuchElementException e ){ //NONE CASE
 					simpleScore += Math.abs(this.currentFloor - target);
 				}
 				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
-					if(this.currLoad >= this.maxLoad - 40){
+					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += 10;
 					}
 				}
@@ -297,19 +308,22 @@ public class BasicElevatorModel extends Agent{
 				}
 				return simpleScore;
 			case "DOWN":
-				
 				try{
 					int maxObject1 = Collections.max(this.floors);
 					int minObject1 = Collections.min(this.floors);
-					if(this.state.equals(Movement.DOWN) && this.currentFloor < target){
-						simpleScore += Math.abs(this.currentFloor - minObject1) + Math.abs(minObject1 - target);
+					if(this.floorInfo.containsKey(target) && this.floorInfo.get(target).equals("UP")){
+						simpleScore += MainController.FLOORNUM + 10;
 					}
-					else if(!this.state.equals(Movement.UP) && this.currentFloor >= target){
-						simpleScore += Math.abs(this.currentFloor - target);
+					else if(this.state.equals(Movement.DOWN) && this.currentFloor < target){
+						 simpleScore += Math.abs(this.currentFloor - minObject1) + Math.abs(maxObject1 - minObject1) + Math.abs(maxObject1 - target);
+					}
+					else if(this.state.equals(Movement.UP)){
+						simpleScore += Math.abs(maxObject1 - this.currentFloor) + Math.abs(target - maxObject1);
 					}
 					else{
-						simpleScore += Math.abs(this.currentFloor - maxObject1) + Math.abs(maxObject1 - target);
+						simpleScore += Math.abs(target - this.currentFloor);
 					}
+					
 				}
 				catch(NoSuchElementException e){
 					simpleScore += Math.abs(this.currentFloor - target);
@@ -380,14 +394,20 @@ public class BasicElevatorModel extends Agent{
 	}
 	
 	
-	
 	public void searchNextObjective(){
 		int result = -1;
 		for(int val: this.floors){
+			String reqInfo = this.floorInfo.get(val);
 			if(this.state.equals(Movement.UP) && val > this.currentFloor && (val < result || result == -1)){
+				if(reqInfo.equals("DOWN")){
+					continue;
+				}
 				result = val;
 			}
 			else if(this.state.equals(Movement.DOWN) && val < this.currentFloor && (val > result || result == -1)){
+				if(reqInfo.equals("UP")){
+					continue;
+				}
 				result = val;
 			}
 			else if (this.state.equals(Movement.NONE) && (result == -1 || Math.abs(this.currentFloor-val) < Math.abs(this.currentFloor - result))){
@@ -479,6 +499,14 @@ public class BasicElevatorModel extends Agent{
 				this.currLoad += p.getWeight();
 				this.people.get(p.getDestination()).add(p);
 				this.floors.add(p.getDestination());
+				if(this.floorInfo.containsKey(p.getDestination())){
+					String str= this.floorInfo.get(p.getDestination());
+					this.floorInfo.remove(p.getDestination());
+					this.floorInfo.put(p.getDestination(), str+"_P");
+				}
+				else{
+					this.floorInfo.put(p.getDestination(), "_P");
+				}
 				this.idleTime++;
 				Logger.writeAndPrint(getLocalName() + ": Entrou uma pessoa com objetivo: " + p.getDestination());
 				it.remove();
