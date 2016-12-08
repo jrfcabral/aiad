@@ -41,7 +41,7 @@ public class BasicElevatorModel extends Agent{
 	private int timeBetweenFloors = 1000; //millis
 	private int maxLoad = 500; //kg
 	private LinkedHashSet<Integer> floors;
-	private HashMap<Integer, String> floorInfo;
+	private HashMap<Integer, RequestInformation> floorInfo;
 	private int idleTime; //time the elevator needs to stay at a floor for everyone to get in/out
 	public ArrayList<ArrayList<Person>> people = new ArrayList< ArrayList<Person>>(MainController.FLOORNUM);
 	private double currLoad;
@@ -68,7 +68,7 @@ public class BasicElevatorModel extends Agent{
 		this.maxLoad = maxLoad;
 		this.startingX = startingX;
 		this.floors = new LinkedHashSet<Integer>();
-		this.floorInfo = new HashMap<Integer, String>();
+		this.floorInfo = new HashMap<Integer, RequestInformation>();
 		this.idleTime = 0;
 		this.state = Movement.NONE;
 		for(int i = 0; i < MainController.FLOORNUM; i++){
@@ -85,7 +85,7 @@ public class BasicElevatorModel extends Agent{
 		this.sectorBounds[0] = lowerSecBound; this.sectorBounds[1] = upperSecBound;
 		
 		this.floors = new LinkedHashSet<Integer>();
-		this.floorInfo = new HashMap<Integer, String>();
+		this.floorInfo = new HashMap<Integer, RequestInformation>();
 		this.idleTime = 0;
 		this.state = Movement.NONE;
 		for(int i = 0; i < MainController.FLOORNUM; i++){
@@ -221,7 +221,7 @@ public class BasicElevatorModel extends Agent{
 			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
 				Logger.writeAndPrint(getLocalName()+": A proposta foi aceite");
 				if (BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent().split(" ")[1]))) {
-					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), cfp.getContent().split(" ")[0]);
+					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false));
 					ACLMessage inform = accept.createReply();
 					inform.setPerformative(ACLMessage.INFORM);
 					searchNextObjective();
@@ -397,22 +397,22 @@ public class BasicElevatorModel extends Agent{
 	public void searchNextObjective(){
 		int result = -1;
 		for(int val: this.floors){
-			String reqInfo = this.floorInfo.get(val);
+			RequestInformation reqInfo = this.floorInfo.get(val);
 			if(this.state.equals(Movement.UP) && val > this.currentFloor && (val < result || result == -1)){
-				if(reqInfo.equals("DOWN")){
+				if(reqInfo.getDirection().equals("DOWN") && !reqInfo.isPassengerStop()){
 					continue;
 				}
 				result = val;
 			}
 			else if(this.state.equals(Movement.DOWN) && val < this.currentFloor && (val > result || result == -1)){
-				if(reqInfo.equals("UP")){
+				if(reqInfo.getDirection().equals("UP") && !reqInfo.isPassengerStop()){
 					continue;
 				}
 				result = val;
 			}
 			else if (this.state.equals(Movement.NONE) && (result == -1 || Math.abs(this.currentFloor-val) < Math.abs(this.currentFloor - result))){
 				result = val;
-			}			
+			}
 		}
 		
 		if (result != -1 && result != this.currentFloor){
@@ -484,10 +484,7 @@ public class BasicElevatorModel extends Agent{
 	
 	private void getNewPassengers(int floor){
 		ListIterator<Person> it = MainController.peopleAtFloors.get(floor).listIterator();
-		String reqInfo = this.floorInfo.get(floor);
-		if(reqInfo == null){
-			return;
-		}
+		RequestInformation reqInfo = this.floorInfo.get(floor);
 		
 		while(it.hasNext()){
 			Person p = it.next();
@@ -495,17 +492,16 @@ public class BasicElevatorModel extends Agent{
 				continue;
 			}
 			
-			if(reqInfo.equals("SIMPLE") || (reqInfo.equals("UP") && p.getDestination() > floor) || (reqInfo.equals("DOWN") && p.getDestination() < floor)){
+			if(reqInfo.getDirection().equals("SIMPLE") || (reqInfo.getDirection().equals("UP") && p.getDestination() > floor) || (reqInfo.getDirection().equals("DOWN") && p.getDestination() < floor)){
 				this.currLoad += p.getWeight();
 				this.people.get(p.getDestination()).add(p);
 				this.floors.add(p.getDestination());
 				if(this.floorInfo.containsKey(p.getDestination())){
-					String str= this.floorInfo.get(p.getDestination());
-					this.floorInfo.remove(p.getDestination());
-					this.floorInfo.put(p.getDestination(), str+"_P");
+					RequestInformation req = this.floorInfo.get(p.getDestination());
+					req.setPassengerStop(true);
 				}
 				else{
-					this.floorInfo.put(p.getDestination(), "_P");
+					this.floorInfo.put(p.getDestination(), new RequestInformation(p.getDestination()));
 				}
 				this.idleTime++;
 				Logger.writeAndPrint(getLocalName() + ": Entrou uma pessoa com objetivo: " + p.getDestination());
