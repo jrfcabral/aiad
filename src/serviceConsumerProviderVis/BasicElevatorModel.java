@@ -24,6 +24,7 @@ import repast.simphony.space.grid.GridPoint;
 import repast.simphony.util.ContextUtils;
 import sajas.core.Agent;
 import sajas.core.behaviours.CyclicBehaviour;
+import sajas.core.behaviours.OneShotBehaviour;
 import sajas.core.behaviours.TickerBehaviour;
 import sajas.domain.DFService;
 import sajas.proto.ContractNetResponder;
@@ -107,8 +108,8 @@ public class BasicElevatorModel extends Agent{
 		this.space = (ContinuousSpace) context.getProjection("space");
 		this.grid =  (Grid) context.getProjection("grid");
 		this.currentObjective = -1;
-		space.moveTo(this, BasicElevatorModel.this.startingX, (MainController.SECTORIZATION)?((BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2 + BasicElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2));
-		this.currentFloor = (MainController.SECTORIZATION)?((BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2 + BasicElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2);
+		space.moveTo(this, BasicElevatorModel.this.startingX, (!MainController.SECTORIZATION.equals("NONE"))?((BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2 + BasicElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2));
+		this.currentFloor = (!MainController.SECTORIZATION.equals("NONE"))?((BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2 + BasicElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2);
 		try {
 	  		DFAgentDescription dfd = new DFAgentDescription();
 	  		dfd.setName(getAID());
@@ -118,6 +119,29 @@ public class BasicElevatorModel extends Agent{
 	  		sd.addOntologies("elevator-ontology");
 	  		dfd.addServices(sd);
 	  		DFService.register(this, dfd);
+	  		
+	  		
+	  		
+			addBehaviour(new CyclicBehaviour(this){
+
+				@Override
+				public void action() {
+					MessageTemplate tmplt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+					
+					ACLMessage msg = myAgent.receive(tmplt);
+					if(msg != null){
+						String[] content = msg.getContent().split(" ");
+						if(BasicElevatorModel.this.sectorBounds[0] < Integer.parseInt(content[0]) && BasicElevatorModel.this.sectorBounds[1] > Integer.parseInt(content[0])){
+							String[] newSector = content[1].split("-");
+							BasicElevatorModel.this.sectorBounds[0] = Integer.parseInt(newSector[0]);
+							BasicElevatorModel.this.sectorBounds[1] = Integer.parseInt(newSector[1]);
+							Logger.writeAndPrint("Got a message from " + msg.getSender() + ": " + msg.getContent());
+						}
+					}					
+				}
+				
+			});
+	  		
 	  		
 	  		addBehaviour(new TickerBehaviour(this, this.timeBetweenFloors){
 
@@ -162,7 +186,7 @@ public class BasicElevatorModel extends Agent{
 					
 					
 					if(BasicElevatorModel.this.currentObjective >= 0){
-						if(currPos.getY() == currentObjective){
+						if(currPos.getY() == currentObjective && BasicElevatorModel.this.floors.contains(currentObjective)){
 							
 							ejectPassengers(BasicElevatorModel.this.currentFloor);
 							
@@ -221,7 +245,7 @@ public class BasicElevatorModel extends Agent{
 			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
 				Logger.writeAndPrint(getLocalName()+": A proposta foi aceite");
 				if (BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent().split(" ")[1]))) {
-					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false));
+					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false, Integer.parseInt(propose.getContent())));
 					ACLMessage inform = accept.createReply();
 					inform.setPerformative(ACLMessage.INFORM);
 					searchNextObjective();
@@ -268,6 +292,11 @@ public class BasicElevatorModel extends Agent{
 				}
 				
 				
+				if(!MainController.SECTORIZATION.equals("NONE") && (target > this.sectorBounds[1] || target < this.sectorBounds[0])){
+					simpleScore += 5;
+				}
+				
+				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
 					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += 10;
@@ -296,6 +325,16 @@ public class BasicElevatorModel extends Agent{
 				}
 				catch(NoSuchElementException e ){ //NONE CASE
 					simpleScore += Math.abs(this.currentFloor - target);
+				}
+				
+				if(!MainController.SECTORIZATION.equals("NONE")){
+					if(target > this.sectorBounds[1]){
+						simpleScore += 7;
+					}
+					else if(target < this.sectorBounds[0]){
+						simpleScore += 2;
+					}
+					
 				}
 				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
@@ -327,6 +366,16 @@ public class BasicElevatorModel extends Agent{
 				}
 				catch(NoSuchElementException e){
 					simpleScore += Math.abs(this.currentFloor - target);
+				}
+				
+				if(!MainController.SECTORIZATION.equals("NONE")){
+					if(target > this.sectorBounds[1]){
+						simpleScore += 2;
+					}
+					else if(target < this.sectorBounds[0]){
+						simpleScore += 7;
+					}
+					
 				}
 				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
@@ -425,13 +474,54 @@ public class BasicElevatorModel extends Agent{
 			
 		}
 		else if (result == -1){
-			
 			this.state = Movement.NONE;
+			if(!MainController.SECTORIZATION.equals("NONE") && (this.currentFloor > this.sectorBounds[1] || this.currentFloor < this.sectorBounds[0])){
+				result = (BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2;
+			}
 		}
 		
 		this.currentObjective = result;
 		Logger.writeAndPrint(getLocalName() + ": novo objetivo: " + this.currentObjective);
 		
+		if(MainController.SECTORIZATION.equals("DYNAMIC") && (this.currentObjective > this.sectorBounds[1] || this.currentObjective < this.sectorBounds[0])){
+			addBehaviour(new OneShotBehaviour(){
+
+				@Override
+				public void action() {
+					// TODO Auto-generated method stub
+					ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+					msg.setContent(BasicElevatorModel.this.currentObjective + " " + BasicElevatorModel.this.sectorBounds[0] + "-" + BasicElevatorModel.this.sectorBounds[1]);
+					msg.setConversationId(MainController.randomStr());
+					DFAgentDescription agentDesc = new DFAgentDescription();
+					ServiceDescription serviceDesc = new ServiceDescription();
+					
+					serviceDesc.setType("Elevator");
+					agentDesc.addServices(serviceDesc);
+
+					DFAgentDescription[] elevators;
+				
+					try {
+						elevators = DFService.search(myAgent, agentDesc, null);
+					
+				
+						if(elevators.length > 0){
+							for(DFAgentDescription dfd: elevators){
+								if(!dfd.getName().equals(getLocalName())){
+									msg.addReceiver(dfd.getName());
+								}
+							}
+							
+						}
+						
+						myAgent.send(msg);
+					} catch (FIPAException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				
+			});
+		}
 	}
 	
 	//for testing purposes only
@@ -481,6 +571,7 @@ public class BasicElevatorModel extends Agent{
 			it.remove();
 		}
 	}
+	
 	
 	private void getNewPassengers(int floor){
 		ListIterator<Person> it = MainController.peopleAtFloors.get(floor).listIterator();

@@ -14,9 +14,11 @@ import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import repast.simphony.random.RandomHelper;
 import sajas.core.AID;
 import sajas.core.Agent;
+import sajas.core.behaviours.CyclicBehaviour;
 import sajas.core.behaviours.TickerBehaviour;
 import sajas.domain.DFService;
 import sajas.proto.ContractNetInitiator;
@@ -26,7 +28,7 @@ public class MainController extends Agent {
 	public static String REQTYPE = "SIMPLE"; //SIMPLE, DIRECTIONAL or SPECIFIC
 	public static int ELEVATORNUM = 2;
 	public static int REQPROBABILITY = 20;
-	public static boolean SECTORIZATION	= true;
+	public static String SECTORIZATION	= "DYNAMIC";
 	
 	
 	public static ArrayList<ArrayList<Person>> peopleAtFloors = new ArrayList< ArrayList<Person>>(FLOORNUM);	
@@ -60,8 +62,6 @@ public class MainController extends Agent {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 		
 
 		addBehaviour(new TickerBehaviour(this, 1000) {
@@ -112,7 +112,7 @@ public class MainController extends Agent {
 		});
 	}
 
-	public String randomStr(){
+	public static String randomStr(){
 		SecureRandom rand = new SecureRandom();
 		return new BigInteger(130, rand).toString(64);
 	}
