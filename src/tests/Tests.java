@@ -40,4 +40,18 @@ public class Tests {
 		int result = BasicElevatorModel.searchNextObjective(floorList, 10, mv);
 		assertEquals(result, -1);
 	}
+	
+	
+	@Test
+	public void testOrderingFunction(){
+		LinkedHashSet<Integer> testList = new LinkedHashSet<Integer>();
+		testList.add(18);
+		testList.add(17);
+		testList.add(6);
+		testList.add(5);
+		testList.add(3);
+		testList.add(0);
+		
+		assertEquals(BasicElevatorModel.getOrderOfRequest(testList, 1, BasicElevatorModel.Movement.UP, 17), 5);
+	}
 }

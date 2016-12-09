@@ -5,9 +5,19 @@ public class RequestInformation {
 	private int destinationFloor;
 	private String direction;
 	private boolean passengerStop;
-	private int requestScore;
+	private int requestScore = -1;
+	public String getActualRequest() {
+		return actualRequest;
+	}
+
+	public void setActualRequest(String actualRequest) {
+		this.actualRequest = actualRequest;
+	}
+
+	private String actualRequest;
 	
 	public RequestInformation(String request, boolean passengerStop, int reqScore){
+		this.actualRequest = request;
 		String[] processedRequest = request.split(" ");
 		if(processedRequest.length == 3){
 			this.targetFloor = Integer.parseInt(processedRequest[1]);
@@ -59,6 +69,14 @@ public class RequestInformation {
 
 	public void setPassengerStop(boolean passengerStop) {
 		this.passengerStop = passengerStop;
+	}
+
+	public int getRequestScore() {
+		return requestScore;
+	}
+
+	public void setRequestScore(int requestScore) {
+		this.requestScore = requestScore;
 	}
 	
 	
