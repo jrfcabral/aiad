@@ -5,6 +5,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Vector;
@@ -25,7 +26,7 @@ import sajas.proto.ContractNetInitiator;
 
 public class MainController extends Agent {
 	public static int FLOORNUM = 21;
-	public static String REQTYPE = "SIMPLE"; //SIMPLE, DIRECTIONAL or SPECIFIC
+	public static String REQTYPE = "SPECIFIC"; //SIMPLE, DIRECTIONAL or SPECIFIC
 	public static int ELEVATORNUM = 2;
 	public static int REQPROBABILITY = 20;
 	public static String SECTORIZATION	= "NONE";
@@ -158,10 +159,15 @@ public class MainController extends Agent {
 				}
 			}
 			else if(REQTYPE.equals("SPECIFIC")){
+				LinkedHashSet<Integer> targetList = new LinkedHashSet<Integer>();
 				for(Integer i: targets){
-					ACLMessage request = new ACLMessage(ACLMessage.CFP);
-					request.setContent("SPECIFIC" + " " + Integer.toString(floor) + " " + i.intValue());
-					completeMessageAndSend(request);
+					if(!targetList.contains(i)){
+						ACLMessage request = new ACLMessage(ACLMessage.CFP);
+						request.setContent("SPECIFIC" + " " + Integer.toString(floor) + " " + i.intValue());
+						targetList.add(i);
+						completeMessageAndSend(request);
+					}
+					
 				}
 			}
 	}

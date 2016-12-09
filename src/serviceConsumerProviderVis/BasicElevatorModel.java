@@ -40,7 +40,7 @@ public class BasicElevatorModel extends Agent{
 		NONE, UP, DOWN
 	}
 	
-	public static String WEIGHTMODEL="NONE";
+	public static String WEIGHTMODEL="STEP";
 	
 	
 	private int currentFloor;
@@ -218,8 +218,6 @@ public class BasicElevatorModel extends Agent{
 							searchNextObjective();
 						}
 						if(BasicElevatorModel.this.idleTime != 0){
-							BasicElevatorModel.this.idleTime--;
-							Logger.writeAndPrint(getLocalName() + ": Parado por haver pessoas a entrar e sair");
 							return;
 						}
 						
@@ -264,17 +262,25 @@ public class BasicElevatorModel extends Agent{
 			@Override
 			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
 				Logger.writeAndPrint(getLocalName()+": A proposta foi aceite");
-				if (BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent().split(" ")[1]))) {
-					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false, Integer.parseInt(propose.getContent())));
-					ACLMessage inform = accept.createReply();
-					inform.setPerformative(ACLMessage.INFORM);
-					searchNextObjective();
-					return inform;
+				BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent().split(" ")[1]));
+				if(MainController.REQTYPE.equals("SPECIFIC")){
+					if(BasicElevatorModel.this.floorInfo.containsKey(Integer.parseInt(cfp.getContent().split(" ")[1]))){
+						RequestInformation req = BasicElevatorModel.this.floorInfo.get(Integer.parseInt(cfp.getContent().split(" ")[1]));
+						req.getDestinationFloor().add(Integer.parseInt(cfp.getContent().split(" ")[2]));
+					}
+					else{
+						BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false, Integer.parseInt(propose.getContent())));
+					}
 				}
-				else {
-					Logger.writeAndPrint(getLocalName()+": Nao conseguiu acrescentar o pedido � lista");
-					throw new FailureException("unexpected-error");
-				}	
+				else{
+					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false, Integer.parseInt(propose.getContent())));
+				}
+					
+				ACLMessage inform = accept.createReply();
+				inform.setPerformative(ACLMessage.INFORM);
+				searchNextObjective();
+				return inform;
+				
 			}
 
 			protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
@@ -320,13 +326,17 @@ public class BasicElevatorModel extends Agent{
 				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
 					if(this.currLoad > this.maxLoad - 40){
-						simpleScore += 10;
+						simpleScore += MainController.FLOORNUM*2;
 					}
 				}
 				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
-					simpleScore += (this.currLoad/this.maxLoad)*10;
+					simpleScore += (this.currLoad/this.maxLoad)*MainController.FLOORNUM;
+					if(this.currLoad > this.maxLoad - 40){
+						simpleScore += MainController.FLOORNUM*2;
+					}
 				}
 				return simpleScore;
+				
 			case "UP": 
 				try{
 					int maxObject = Collections.max(this.floors);
@@ -351,21 +361,24 @@ public class BasicElevatorModel extends Agent{
 				
 				if(!MainController.SECTORIZATION.equals("NONE")){
 					if(target > this.sectorBounds[1]){
-						simpleScore += 7;
+						simpleScore += MainController.FLOORNUM*0.3;
 					}
 					else if(target < this.sectorBounds[0]){
-						simpleScore += 2;
+						simpleScore += MainController.FLOORNUM*0.1;
 					}
 					
 				}
 				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
 					if(this.currLoad > this.maxLoad - 40){
-						simpleScore += 10;
+						simpleScore += MainController.FLOORNUM*2;
 					}
 				}
 				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
-					simpleScore += (this.currLoad/this.maxLoad)*10;
+					simpleScore += (this.currLoad/this.maxLoad)*MainController.FLOORNUM;
+					if(this.currLoad > this.maxLoad - 40){
+						simpleScore += MainController.FLOORNUM*2;
+					}
 				}
 				return simpleScore;
 				
@@ -394,21 +407,24 @@ public class BasicElevatorModel extends Agent{
 				
 				if(!MainController.SECTORIZATION.equals("NONE")){
 					if(target > this.sectorBounds[1]){
-						simpleScore += 2;
+						simpleScore += MainController.FLOORNUM*0.1;
 					}
 					else if(target < this.sectorBounds[0]){
-						simpleScore += 7;
+						simpleScore += MainController.FLOORNUM*0.3;
 					}
 					
 				}
 				
 				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
-					if(this.currLoad >= this.maxLoad - 40){
-						simpleScore += 10;
+					if(this.currLoad > this.maxLoad - 40){
+						simpleScore += MainController.FLOORNUM*2;
 					}
 				}
 				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
-					simpleScore += (this.currLoad/this.maxLoad)*10;
+					simpleScore += (this.currLoad/this.maxLoad)*MainController.FLOORNUM;
+					if(this.currLoad > this.maxLoad - 40){
+						simpleScore += MainController.FLOORNUM*2;
+					}
 				}
 				
 				return simpleScore;
@@ -422,43 +438,69 @@ public class BasicElevatorModel extends Agent{
 					
 					if(this.state.equals(Movement.UP)){
 						if( target >= this.currentFloor && destination > target){
-							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - destination);
+							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - destination) + getOrderOfRequest(this.floors, target, this.state, this.currentObjective) + getOrderOfRequest(this.floors, destination, this.state, this.currentObjective) + 1;
 						}
 						
 						else if(target <= this.currentFloor && destination < target){
-							simpleScore =  Math.abs(this.currentFloor - maxObj) + Math.abs(maxObj - target) + Math.abs(target - destination);
+							simpleScore =  Math.abs(this.currentFloor - maxObj) + Math.abs(maxObj - target) + Math.abs(target - destination) + getOrderOfRequest(this.floors, target, this.state, this.currentObjective) + getOrderOfRequest(this.floors, destination, this.state, this.currentObjective) + 1;
 						}
 						
 						else if (target <= this.currentFloor && destination > target){
-							simpleScore = Math.abs(this.currentFloor - maxObj) + Math.abs(maxObj - target) + Math.abs(target - Math.min(target, minObj)) + Math.abs(target - Math.min(target,minObj));
+							simpleScore = Math.abs(this.currentFloor - maxObj) + Math.abs(maxObj - minObj) + Math.abs(target - minObj) + Math.abs(target - destination) + getOrderOfRequest(this.floors, target, this.state, this.currentObjective) + getOrderOfRequest(this.floors, destination, this.state, this.currentObjective) + 1;
 						}
 						else if (target >= this.currentFloor && destination < target){
-							//return dist(elevator, call) + [ dist(call, max(objectives)) + dist(max(objectives), destination) ]
-							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - maxObj) + Math.abs(maxObj - destination);
+							
+							simpleScore = Math.abs(this.currentFloor - maxObj) + Math.abs(target - maxObj) + Math.abs(target - destination) + getOrderOfRequest(this.floors, target, this.state, this.currentObjective) + getOrderOfRequest(this.floors, destination, this.state, this.currentObjective) + 1;
 						}
 					}
 					else if(this.state.equals(Movement.DOWN)){
 						if(target < this.currentFloor && destination < target){
-							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - destination);
+							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - destination) + getOrderOfRequest(this.floors, target, this.state, this.currentObjective) + getOrderOfRequest(this.floors, destination, this.state, this.currentObjective) + 1;
 						}
 						else if (target > this.currentFloor && destination > target){
-							simpleScore = Math.abs(minObj - this.currentFloor) + Math.abs(minObj - target) + Math.abs(target - destination);
+							simpleScore = Math.abs(minObj - this.currentFloor) + Math.abs(minObj - target) + Math.abs(target - destination) + getOrderOfRequest(this.floors, target, this.state, this.currentObjective) + getOrderOfRequest(this.floors, destination, this.state, this.currentObjective) + 1;
 						}
 						else if (target > this.currentFloor && destination < target){
-							simpleScore = Math.abs(minObj - this.currentFloor) + Math.abs(minObj - target) + Math.abs(Math.max(maxObj, target) - target) + Math.abs(Math.max(maxObj, target) - destination); 
+							simpleScore = Math.abs(minObj - this.currentFloor) + Math.abs(minObj - maxObj) + Math.abs(maxObj - target) + Math.abs(target - destination) + + getOrderOfRequest(this.floors, target, this.state, this.currentObjective) + getOrderOfRequest(this.floors, destination, this.state, this.currentObjective) + 1;
 						}
 						else if (target < this.currentFloor && destination > target){
-							simpleScore = Math.abs(this.currentFloor - target) + Math.abs(minObj - target) + Math.abs(minObj - destination);
+							simpleScore = Math.abs(this.currentFloor - minObj) + Math.abs(minObj - target) + Math.abs(target - destination) + getOrderOfRequest(this.floors, target, this.state, this.currentObjective) + getOrderOfRequest(this.floors, destination, this.state, this.currentObjective) + 1;
 						}
 					}
 					
 					else{
-						return 1;
+						simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - destination);
 					}
 				}
 				catch(NoSuchElementException e){
 					simpleScore = Math.abs(this.currentFloor - target) + Math.abs(target - destination);
 				}
+				
+				if(!MainController.SECTORIZATION.equals("NONE")){
+					if(target > this.sectorBounds[1] || target < this.sectorBounds[0]){
+						if(destination < this.sectorBounds[1] && destination > this.sectorBounds[0]){
+							simpleScore += MainController.FLOORNUM*0.1;
+						}
+						else{
+							simpleScore += MainController.FLOORNUM*0.3;
+						}	
+					}
+					
+					
+				}
+				
+				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
+					if(this.currLoad > this.maxLoad - 40){
+						simpleScore += MainController.FLOORNUM*2;
+					}
+				}
+				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
+					simpleScore += ((this.currLoad/this.maxLoad)/2)*MainController.FLOORNUM;
+					if(this.currLoad > this.maxLoad - 40){
+						simpleScore += MainController.FLOORNUM*2;
+					}
+				}
+				
 				return simpleScore;
 			default:
 				break;
@@ -507,12 +549,13 @@ public class BasicElevatorModel extends Agent{
 		this.currentObjective = result;
 		Logger.writeAndPrint(getLocalName() + ": novo objetivo: " + this.currentObjective);
 		
+		
+		
 		if(MainController.SECTORIZATION.equals("DYNAMIC") && (this.currentObjective > this.sectorBounds[1] || this.currentObjective < this.sectorBounds[0]) && this.currentObjective != -1){
 			addBehaviour(new OneShotBehaviour(){
 
 				@Override
 				public void action() {
-					// TODO Auto-generated method stub
 					ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 					msg.setContent(BasicElevatorModel.this.currentObjective + " " + BasicElevatorModel.this.sectorBounds[0] + "-" + BasicElevatorModel.this.sectorBounds[1]);
 					msg.setConversationId(MainController.randomStr());
@@ -629,7 +672,11 @@ public class BasicElevatorModel extends Agent{
 				continue;
 			}
 			
-			if(reqInfo.getDirection().equals("SIMPLE") || (reqInfo.getDirection().equals("UP") && p.getDestination() > floor) || (reqInfo.getDirection().equals("DOWN") && p.getDestination() < floor)){
+			if(reqInfo.getDirection().equals("SIMPLE") || 
+			(reqInfo.getDirection().equals("UP") && p.getDestination() > floor && MainController.REQTYPE.equals("DIRECTIONAL")) || 
+			(reqInfo.getDirection().equals("DOWN") && p.getDestination() < floor && MainController.REQTYPE.equals("DIRECTIONAL")) ||
+			(MainController.REQTYPE.equals("SPECIFIC") && reqInfo.getDestinationFloor().contains(p.getDestination()))){
+			
 				this.currLoad += p.getWeight();
 				this.people.get(p.getDestination()).add(p);
 				this.floors.add(p.getDestination());
@@ -641,6 +688,7 @@ public class BasicElevatorModel extends Agent{
 					this.floorInfo.put(p.getDestination(), new RequestInformation(p.getDestination()));
 				}
 				this.idleTime++;
+				searchNextObjective();
 				Logger.writeAndPrint(getLocalName() + ": Entrou uma pessoa com objetivo: " + p.getDestination());
 				it.remove();
 			}

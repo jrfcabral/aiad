@@ -1,8 +1,10 @@
 package serviceConsumerProviderVis;
 
+import java.util.LinkedHashSet;
+
 public class RequestInformation {
 	private int targetFloor;
-	private int destinationFloor;
+	private LinkedHashSet<Integer> destinationFloor;
 	private String direction;
 	private boolean passengerStop;
 	private int requestScore = -1;
@@ -21,8 +23,9 @@ public class RequestInformation {
 		String[] processedRequest = request.split(" ");
 		if(processedRequest.length == 3){
 			this.targetFloor = Integer.parseInt(processedRequest[1]);
-			this.destinationFloor = Integer.parseInt(processedRequest[2]);
-			this.direction = (this.targetFloor < this.destinationFloor)?"UP":"DOWN";
+			this.destinationFloor = new LinkedHashSet<Integer>(); 
+			this.destinationFloor.add(Integer.parseInt(processedRequest[2]));
+			this.direction = "N/A";
 		}
 		else if(processedRequest.length == 2){
 			this.targetFloor = Integer.parseInt(processedRequest[1]);
@@ -34,9 +37,10 @@ public class RequestInformation {
 	}
 	
 	public RequestInformation(int destination){
-		this.destinationFloor = destination;
+		this.targetFloor = destination;
 		this.passengerStop = true;
 		this.direction = "N/A";
+		this.destinationFloor = new LinkedHashSet<Integer>();
 	}
 
 	public int getTargetFloor() {
@@ -47,13 +51,11 @@ public class RequestInformation {
 		this.targetFloor = targetFloor;
 	}
 
-	public int getDestinationFloor() {
+	public LinkedHashSet<Integer> getDestinationFloor() {
 		return destinationFloor;
 	}
 
-	public void setDestinationFloor(int destinationFloor) {
-		this.destinationFloor = destinationFloor;
-	}
+	
 
 	public String getDirection() {
 		return direction;
