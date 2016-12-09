@@ -688,13 +688,14 @@ public class BasicElevatorModel extends Agent{
 					this.floorInfo.put(p.getDestination(), new RequestInformation(p.getDestination()));
 				}
 				this.idleTime++;
-				searchNextObjective();
+				
 				Logger.writeAndPrint(getLocalName() + ": Entrou uma pessoa com objetivo: " + p.getDestination());
 				it.remove();
 			}
 			
 			
 		}
+		searchNextObjective();
 	}
 	
 	private int getNumPeople(){

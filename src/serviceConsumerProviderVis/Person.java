@@ -33,5 +33,21 @@ public class Person {
 		weightArray[9] = RandomHelper.nextDoubleFromTo(100, 150);
 		return weightArray[RandomHelper.nextIntFromTo(0, 9)];
 	}
+
+	public int getTimeWaiting() {
+		return timeWaiting;
+	}
+
+	public void setTimeWaiting(int timeWaiting) {
+		this.timeWaiting = timeWaiting;
+	}
+
+	public int getTimeInElevator() {
+		return timeInElevator;
+	}
+
+	public void setTimeInElevator(int timeInElevator) {
+		this.timeInElevator = timeInElevator;
+	}
 	
 }

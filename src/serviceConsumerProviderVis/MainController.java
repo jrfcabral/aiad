@@ -26,10 +26,10 @@ import sajas.proto.ContractNetInitiator;
 
 public class MainController extends Agent {
 	public static int FLOORNUM = 21;
-	public static String REQTYPE = "SPECIFIC"; //SIMPLE, DIRECTIONAL or SPECIFIC
+	public static String REQTYPE = "SIMPLE"; //SIMPLE, DIRECTIONAL or SPECIFIC
 	public static int ELEVATORNUM = 2;
 	public static int REQPROBABILITY = 20;
-	public static String SECTORIZATION	= "NONE";
+	public static String SECTORIZATION	= "DYNAMIC";
 	public static String REALLOCATION = "NONE";
 	
 	
