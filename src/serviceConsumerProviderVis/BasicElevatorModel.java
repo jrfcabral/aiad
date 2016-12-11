@@ -79,9 +79,11 @@ public class BasicElevatorModel extends Agent{
 				people++;
 			}
 		}
+		
 		if (people == 0)
 			return 0;
 		return total/people;
+		
 	}
 	
 	public BasicElevatorModel(int timeBetweenFloors, int maxLoad, int startingX){
