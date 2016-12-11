@@ -78,7 +78,7 @@ public class MainController extends Agent {
 		}
 		
 
-		addBehaviour(new TickerBehaviour(this, 1000) {
+		addBehaviour(new TickerBehaviour(this, ElevatorModel.TIMEBETWEENFLOORS) {
 
 			@Override
 			protected void onTick() {
@@ -107,7 +107,7 @@ public class MainController extends Agent {
 						createRequest(0, min, max, targets);
 					} else {
 						int destination = floor -10;
-						for(int i = 0; i < RandomHelper.nextIntFromTo(1, 5); i++){
+						for(int i = 0; i < RandomHelper.nextIntFromTo(1, 2); i++){
 							int personDestination = randomDestination(destination);
 							MainController.peopleAtFloors.get(destination).add(new Person(personDestination));
 							if(min > personDestination){

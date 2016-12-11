@@ -46,8 +46,8 @@ public class ElevatorModel extends Agent{
 	
 	
 	private int currentFloor;
-	private int timeBetweenFloors = MAXLOAD; //millis
-	private int maxLoad = TIMEBETWEENFLOORS; //kg
+	private int timeBetweenFloors = TIMEBETWEENFLOORS; //millis
+	private int maxLoad = MAXLOAD; //kg
 	private LinkedHashSet<Integer> floors;
 	private HashMap<Integer, RequestInformation> floorInfo;
 	private int idleTime; //time the elevator needs to stay at a floor for everyone to get in/out
@@ -173,7 +173,7 @@ public class ElevatorModel extends Agent{
 			});
 	  		
 	  		
-	  		addBehaviour(new TickerBehaviour(this, this.timeBetweenFloors){
+	  		addBehaviour(new TickerBehaviour(this, TIMEBETWEENFLOORS){
 
 				@Override
 				protected void onTick() {

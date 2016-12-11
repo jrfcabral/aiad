@@ -49,10 +49,10 @@ public class RepastSElevatorSchedulingLauncher extends RepastSLauncher {
 			for(int i = 0;  i < MainController.ELEVATORNUM; i++){
 				ElevatorModel elevator;
 				if(MainController.SECTORIZATION.equals("NONE")){
-					elevator = new ElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1));
+					elevator = new ElevatorModel(ElevatorModel.MAXLOAD, ElevatorModel.TIMEBETWEENFLOORS, (50/MainController.ELEVATORNUM)*(i+1));
 				}
 				else{
-					elevator = new ElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1), (MainController.FLOORNUM/MainController.ELEVATORNUM)*i, (MainController.FLOORNUM/MainController.ELEVATORNUM)*(i+1));
+					elevator = new ElevatorModel(ElevatorModel.MAXLOAD, ElevatorModel.TIMEBETWEENFLOORS, (50/MainController.ELEVATORNUM)*(i+1), (MainController.FLOORNUM/MainController.ELEVATORNUM)*i, (MainController.FLOORNUM/MainController.ELEVATORNUM)*(i+1));
 				}
 				mainContainer.acceptNewAgent("Elevator"+i, elevator).start();
 			} 
