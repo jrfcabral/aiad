@@ -1,16 +1,16 @@
 <repast.simphony.visualization.engine.CartesianDisplayDescriptor>
-  <name>New Display</name>
+  <name>elevator display</name>
   <type>2D</type>
   <styles>
     <entry>
-      <string>serviceConsumerProviderVis.BasicElevatorModel</string>
+      <string>ElevatorScheduling.ElevatorModel</string>
       <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
     </entry>
   </styles>
   <editedStyles>
     <entry>
-      <string>serviceConsumerProviderVis.BasicElevatorModel</string>
-      <string>serviceConsumerProviderVis.BasicElevatorModel.style_0.xml</string>
+      <string>ElevatorScheduling.ElevatorModel</string>
+      <string>serviceConsumerProviderVis.ElevatorModel.style_0.xml</string>
     </entry>
   </editedStyles>
   <netStyles/>
@@ -23,27 +23,27 @@
     <pType>LAST</pType>
     <duration>-1.0</duration>
     <frequency>REPEAT</frequency>
-    <hashCode>202417839</hashCode>
+    <hashCode>-535689624</hashCode>
   </schedParams>
   <layoutClassName>foo.bar.baz</layoutClassName>
   <layoutProjection>space</layoutProjection>
   <layoutInterval>0</layoutInterval>
   <layerOrder>
     <entry>
-      <string>serviceConsumerProviderVis.BasicElevatorModel</string>
+      <string>ElevatorScheduling.ElevatorModel</string>
       <int>0</int>
     </entry>
   </layerOrder>
   <projections>
     <repast.simphony.scenario.data.ProjectionData>
-      <id>space</id>
-      <attributes/>
-      <type>continuous space</type>
-    </repast.simphony.scenario.data.ProjectionData>
-    <repast.simphony.scenario.data.ProjectionData>
       <id>grid</id>
       <attributes/>
       <type>grid</type>
+    </repast.simphony.scenario.data.ProjectionData>
+    <repast.simphony.scenario.data.ProjectionData>
+      <id>space</id>
+      <attributes/>
+      <type>continuous space</type>
     </repast.simphony.scenario.data.ProjectionData>
   </projections>
   <visualizationProperties class="repast.simphony.visualization.UnitSizeLayoutProperties">
@@ -53,7 +53,7 @@
     <entry>
       <string>grid</string>
       <repast.simphony.visualization.grid.GridProjectionDescriptor>
-        <proj reference="../../../../projections/repast.simphony.scenario.data.ProjectionData[2]"/>
+        <proj reference="../../../../projections/repast.simphony.scenario.data.ProjectionData"/>
         <props>
           <entry>
             <string>repast.simphony.visualization.grid.GridDecorator</string>
@@ -78,7 +78,7 @@
     <entry>
       <string>space</string>
       <repast.simphony.visualization.continuous.ContinuousProjectionDescriptor>
-        <proj reference="../../../../projections/repast.simphony.scenario.data.ProjectionData"/>
+        <proj reference="../../../../projections/repast.simphony.scenario.data.ProjectionData[2]"/>
         <props>
           <entry>
             <string>repast.simphony.visualization.continuous.ContinuousDecorator</string>

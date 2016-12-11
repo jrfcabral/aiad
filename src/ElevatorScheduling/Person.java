@@ -1,4 +1,4 @@
-package serviceConsumerProviderVis;
+package ElevatorScheduling;
 
 import repast.simphony.random.RandomHelper;
 

@@ -1,4 +1,4 @@
-package serviceConsumerProviderVis;
+package ElevatorScheduling;
 
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -45,8 +45,8 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 		String[] sectorizationModelOptions = {"NONE", "RIGID", "DYNAMIC"};
 		JComboBox<String> sectorizationModel = new JComboBox<String>(weightModelOptions);
 		
-		JTextField maxLoad = new JTextField(Integer.toString(BasicElevatorModel.MAXLOAD));
-		JTextField tickPerSecond = new JTextField(Integer.toString(BasicElevatorModel.TIMEBETWEENFLOORS));
+		JTextField maxLoad = new JTextField(Integer.toString(ElevatorModel.MAXLOAD));
+		JTextField tickPerSecond = new JTextField(Integer.toString(ElevatorModel.TIMEBETWEENFLOORS));
 		
 		
 		JPanel floorPanel = new JPanel(new GridLayout(1, 2));

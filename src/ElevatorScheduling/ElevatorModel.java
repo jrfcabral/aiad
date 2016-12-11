@@ -1,4 +1,4 @@
-package serviceConsumerProviderVis;
+package ElevatorScheduling;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +34,7 @@ import sajas.domain.DFService;
 import sajas.proto.ContractNetInitiator;
 import sajas.proto.ContractNetResponder;
 
-public class BasicElevatorModel extends Agent{
+public class ElevatorModel extends Agent{
 	
 	public	 enum Movement{
 		NONE, UP, DOWN
@@ -88,7 +88,7 @@ public class BasicElevatorModel extends Agent{
 		
 	}
 	
-	public BasicElevatorModel(int timeBetweenFloors, int maxLoad, int startingX){
+	public ElevatorModel(int timeBetweenFloors, int maxLoad, int startingX){
 		this.timeBetweenFloors = timeBetweenFloors;
 		this.maxLoad = maxLoad;
 		this.startingX = startingX;
@@ -102,7 +102,7 @@ public class BasicElevatorModel extends Agent{
 
 	}
 	
-	public BasicElevatorModel(int timeBetweenFloors, int maxLoad, int startingX, int lowerSecBound, int upperSecBound){
+	public ElevatorModel(int timeBetweenFloors, int maxLoad, int startingX, int lowerSecBound, int upperSecBound){
 		this.timeBetweenFloors = timeBetweenFloors;
 		this.maxLoad = maxLoad;
 		this.startingX = startingX;
@@ -123,8 +123,8 @@ public class BasicElevatorModel extends Agent{
 		
 		
 		Logger.writeAndPrint(getLocalName() + " coming online");
-		if(BasicElevatorModel.this.sectorBounds != null){
-			Logger.writeToLog(getLocalName() + " sector: " + BasicElevatorModel.this.sectorBounds[0] + " - " + BasicElevatorModel.this.sectorBounds[1]);
+		if(ElevatorModel.this.sectorBounds != null){
+			Logger.writeToLog(getLocalName() + " sector: " + ElevatorModel.this.sectorBounds[0] + " - " + ElevatorModel.this.sectorBounds[1]);
 		}
 		
 		
@@ -132,8 +132,8 @@ public class BasicElevatorModel extends Agent{
 		this.space = (ContinuousSpace) context.getProjection("space");
 		this.grid =  (Grid) context.getProjection("grid");
 		this.currentObjective = -1;
-		space.moveTo(this, BasicElevatorModel.this.startingX, (!MainController.SECTORIZATION.equals("NONE"))?((BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2 + BasicElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2));
-		this.currentFloor = (!MainController.SECTORIZATION.equals("NONE"))?((BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2 + BasicElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2);
+		space.moveTo(this, ElevatorModel.this.startingX, (!MainController.SECTORIZATION.equals("NONE"))?((ElevatorModel.this.sectorBounds[1] - ElevatorModel.this.sectorBounds[0])/2 + ElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2));
+		this.currentFloor = (!MainController.SECTORIZATION.equals("NONE"))?((ElevatorModel.this.sectorBounds[1] - ElevatorModel.this.sectorBounds[0])/2 + ElevatorModel.this.sectorBounds[0]):(MainController.FLOORNUM/2);
 		try {
 	  		DFAgentDescription dfd = new DFAgentDescription();
 	  		dfd.setName(getAID());
@@ -155,16 +155,16 @@ public class BasicElevatorModel extends Agent{
 					ACLMessage msg = myAgent.receive(informTemplate);
 					if(msg != null){
 						String[] content = msg.getContent().split(" ");
-						if(BasicElevatorModel.this.sectorBounds[0] < Integer.parseInt(content[0]) && BasicElevatorModel.this.sectorBounds[1] > Integer.parseInt(content[0])){
+						if(ElevatorModel.this.sectorBounds[0] < Integer.parseInt(content[0]) && ElevatorModel.this.sectorBounds[1] > Integer.parseInt(content[0])){
 							String[] newSector = content[1].split("-");
 							
 							Logger.writeAndPrint(getLocalName() + "Got a message from " + msg.getSender() + ": " + msg.getContent());
 							searchNextObjective();
 							ACLMessage reply = msg.createReply();
-							reply.setContent(BasicElevatorModel.this.sectorBounds[0] + "-" + BasicElevatorModel.this.sectorBounds[1]);
+							reply.setContent(ElevatorModel.this.sectorBounds[0] + "-" + ElevatorModel.this.sectorBounds[1]);
 							reply.setPerformative(ACLMessage.CONFIRM);
-							BasicElevatorModel.this.sectorBounds[0] = Integer.parseInt(newSector[0]);
-							BasicElevatorModel.this.sectorBounds[1] = Integer.parseInt(newSector[1]);
+							ElevatorModel.this.sectorBounds[0] = Integer.parseInt(newSector[0]);
+							ElevatorModel.this.sectorBounds[1] = Integer.parseInt(newSector[1]);
 							myAgent.send(reply);
 						}
 					}					
@@ -179,18 +179,18 @@ public class BasicElevatorModel extends Agent{
 				protected void onTick() {
 					NdPoint currPos = space.getLocation(this.myAgent);
 					String taskList = "";
-					for(int val: BasicElevatorModel.this.floors){
+					for(int val: ElevatorModel.this.floors){
 						taskList += val+", ";
 					}
 					Logger.writeAndPrint(getLocalName() + ": \n" + 
-										"Objetivo: " +  BasicElevatorModel.this.currentObjective + "\n" +
-										"Direcao atual: " + BasicElevatorModel.this.state + "\n" +
-										"Andar atual: " + currPos.getY() + ", " + BasicElevatorModel.this.currentFloor + "\n" + 
-										"Peso atual: " + BasicElevatorModel.this.currLoad + "\n"+
+										"Objetivo: " +  ElevatorModel.this.currentObjective + "\n" +
+										"Direcao atual: " + ElevatorModel.this.state + "\n" +
+										"Andar atual: " + currPos.getY() + ", " + ElevatorModel.this.currentFloor + "\n" + 
+										"Peso atual: " + ElevatorModel.this.currLoad + "\n"+
 										"Lista de tarefas: " + "\n[" + taskList +  "]\n" +
-										"Passageiros: " + BasicElevatorModel.this.getNumPeople() + "\n\n\n");
+										"Passageiros: " + ElevatorModel.this.getNumPeople() + "\n\n\n");
 					if(!MainController.SECTORIZATION.equals("NONE")){
-						Logger.writeAndPrint("Setor atual: " + BasicElevatorModel.this.sectorBounds[0] + "-" + BasicElevatorModel.this.sectorBounds[1]);
+						Logger.writeAndPrint("Setor atual: " + ElevatorModel.this.sectorBounds[0] + "-" + ElevatorModel.this.sectorBounds[1]);
 					}
 					
 					Logger.writeAndPrint("\n\n\n");
@@ -202,7 +202,7 @@ public class BasicElevatorModel extends Agent{
 					System.out.println("Tempo em andamento: " + courseTime);*/
 					 					
 					totalTime++;
-					if (BasicElevatorModel.this.getNumPeople() == 0)
+					if (ElevatorModel.this.getNumPeople() == 0)
 						emptyTime++;
 					else
 						withPeopleTime++;
@@ -213,39 +213,39 @@ public class BasicElevatorModel extends Agent{
 					else
 						courseTime++;
 					
-					if(BasicElevatorModel.this.idleTime != 0){
-						BasicElevatorModel.this.idleTime--;
+					if(ElevatorModel.this.idleTime != 0){
+						ElevatorModel.this.idleTime--;
 						Logger.writeAndPrint(getLocalName() + ": Parado por haver pessoas a entrar e sair");
 						return;
 					}
 					
 					
-					if(BasicElevatorModel.this.currentObjective >= 0){ //has jobs to do
-						if(currPos.getY() == currentObjective && BasicElevatorModel.this.floors.contains(currentObjective)){ //reached target floor
+					if(ElevatorModel.this.currentObjective >= 0){ //has jobs to do
+						if(currPos.getY() == currentObjective && ElevatorModel.this.floors.contains(currentObjective)){ //reached target floor
 							
-							ejectPassengers(BasicElevatorModel.this.currentFloor);
+							ejectPassengers(ElevatorModel.this.currentFloor);
 							
 							increaseTimeInElevator();
 							
-							getNewPassengers(BasicElevatorModel.this.currentFloor);
+							getNewPassengers(ElevatorModel.this.currentFloor);
 							
 							
-							BasicElevatorModel.this.floors.remove(currentObjective);
-							BasicElevatorModel.this.floorInfo.remove(currentObjective);
+							ElevatorModel.this.floors.remove(currentObjective);
+							ElevatorModel.this.floorInfo.remove(currentObjective);
 							
 							searchNextObjective();
 						}
-						if(BasicElevatorModel.this.idleTime != 0){
+						if(ElevatorModel.this.idleTime != 0){
 							return;
 						}
 						
-						if(BasicElevatorModel.this.state == Movement.UP){	
+						if(ElevatorModel.this.state == Movement.UP){	
 							space.moveTo(this.myAgent, currPos.getX(), currPos.getY()+1);
-							BasicElevatorModel.this.currentFloor++;
+							ElevatorModel.this.currentFloor++;
 						}
-						else if(BasicElevatorModel.this.state == Movement.DOWN){
+						else if(ElevatorModel.this.state == Movement.DOWN){
 							space.moveTo(this.myAgent, currPos.getX(), currPos.getY()-1);
-							BasicElevatorModel.this.currentFloor--;
+							ElevatorModel.this.currentFloor--;
 						}
 					}
 						
@@ -265,7 +265,7 @@ public class BasicElevatorModel extends Agent{
 				String[] processedRequest = cfp.getContent().split(" ");
 				
 				int proposal = Integer.MAX_VALUE;
-				if(!processedRequest[processedRequest.length - 1].equals("REALLOC") || BasicElevatorModel.this.state.equals("NONE") || MainController.REALLOCATION.equals("GENERAL")){
+				if(!processedRequest[processedRequest.length - 1].equals("REALLOC") || ElevatorModel.this.state.equals("NONE") || MainController.REALLOCATION.equals("GENERAL")){
 					 proposal = calculateScore(cfp.getContent());
 				}
 				
@@ -280,18 +280,18 @@ public class BasicElevatorModel extends Agent{
 			@Override
 			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
 				Logger.writeAndPrint(getLocalName()+": A proposta foi aceite");
-				BasicElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent().split(" ")[1]));
+				ElevatorModel.this.floors.add(Integer.parseInt(cfp.getContent().split(" ")[1]));
 				if(MainController.REQTYPE.equals("SPECIFIC")){
-					if(BasicElevatorModel.this.floorInfo.containsKey(Integer.parseInt(cfp.getContent().split(" ")[1]))){
-						RequestInformation req = BasicElevatorModel.this.floorInfo.get(Integer.parseInt(cfp.getContent().split(" ")[1]));
+					if(ElevatorModel.this.floorInfo.containsKey(Integer.parseInt(cfp.getContent().split(" ")[1]))){
+						RequestInformation req = ElevatorModel.this.floorInfo.get(Integer.parseInt(cfp.getContent().split(" ")[1]));
 						req.getDestinationFloor().add(Integer.parseInt(cfp.getContent().split(" ")[2]));
 					}
 					else{
-						BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false, Integer.parseInt(propose.getContent())));
+						ElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false, Integer.parseInt(propose.getContent())));
 					}
 				}
 				else{
-					BasicElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false, Integer.parseInt(propose.getContent())));
+					ElevatorModel.this.floorInfo.put(Integer.parseInt(cfp.getContent().split(" ")[1]), new RequestInformation(cfp.getContent(), false, Integer.parseInt(propose.getContent())));
 				}
 					
 				ACLMessage inform = accept.createReply();
@@ -342,12 +342,12 @@ public class BasicElevatorModel extends Agent{
 				}
 				
 				
-				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
+				if(ElevatorModel.WEIGHTMODEL.equals("STEP")){
 					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += MainController.FLOORNUM*2;
 					}
 				}
-				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
+				else if(ElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
 					simpleScore += (this.currLoad/this.maxLoad)*MainController.FLOORNUM;
 					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += MainController.FLOORNUM*2;
@@ -387,12 +387,12 @@ public class BasicElevatorModel extends Agent{
 					
 				}
 				
-				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
+				if(ElevatorModel.WEIGHTMODEL.equals("STEP")){
 					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += MainController.FLOORNUM*2;
 					}
 				}
-				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
+				else if(ElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
 					simpleScore += (this.currLoad/this.maxLoad)*MainController.FLOORNUM;
 					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += MainController.FLOORNUM*2;
@@ -433,12 +433,12 @@ public class BasicElevatorModel extends Agent{
 					
 				}
 				
-				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
+				if(ElevatorModel.WEIGHTMODEL.equals("STEP")){
 					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += MainController.FLOORNUM*2;
 					}
 				}
-				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
+				else if(ElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
 					simpleScore += (this.currLoad/this.maxLoad)*MainController.FLOORNUM;
 					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += MainController.FLOORNUM*2;
@@ -507,12 +507,12 @@ public class BasicElevatorModel extends Agent{
 					
 				}
 				
-				if(BasicElevatorModel.WEIGHTMODEL.equals("STEP")){
+				if(ElevatorModel.WEIGHTMODEL.equals("STEP")){
 					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += MainController.FLOORNUM*2;
 					}
 				}
-				else if(BasicElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
+				else if(ElevatorModel.WEIGHTMODEL.equals("INCREMENTAL")){
 					simpleScore += ((this.currLoad/this.maxLoad)/2)*MainController.FLOORNUM;
 					if(this.currLoad > this.maxLoad - 40){
 						simpleScore += MainController.FLOORNUM*2;
@@ -560,7 +560,7 @@ public class BasicElevatorModel extends Agent{
 		else if (result == -1){
 			this.state = Movement.NONE;
 			if(!MainController.SECTORIZATION.equals("NONE") && (this.currentFloor > this.sectorBounds[1] || this.currentFloor < this.sectorBounds[0])){
-				result = (BasicElevatorModel.this.sectorBounds[1] - BasicElevatorModel.this.sectorBounds[0])/2;
+				result = (ElevatorModel.this.sectorBounds[1] - ElevatorModel.this.sectorBounds[0])/2;
 			}
 		}
 		
@@ -575,7 +575,7 @@ public class BasicElevatorModel extends Agent{
 				@Override
 				public void action() {
 					ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-					msg.setContent(BasicElevatorModel.this.currentObjective + " " + BasicElevatorModel.this.sectorBounds[0] + "-" + BasicElevatorModel.this.sectorBounds[1]);
+					msg.setContent(ElevatorModel.this.currentObjective + " " + ElevatorModel.this.sectorBounds[0] + "-" + ElevatorModel.this.sectorBounds[1]);
 					msg.setConversationId(MainController.randomStr());
 					DFAgentDescription agentDesc = new DFAgentDescription();
 					ServiceDescription serviceDesc = new ServiceDescription();
@@ -606,8 +606,8 @@ public class BasicElevatorModel extends Agent{
 						if(reply != null){
 							
 							String[] newSector = reply.getContent().split("-");
-							BasicElevatorModel.this.sectorBounds[0] = Integer.parseInt(newSector[0]);
-							BasicElevatorModel.this.sectorBounds[1] = Integer.parseInt(newSector[1]);
+							ElevatorModel.this.sectorBounds[0] = Integer.parseInt(newSector[0]);
+							ElevatorModel.this.sectorBounds[1] = Integer.parseInt(newSector[1]);
 						}
 									
 					
@@ -816,7 +816,7 @@ public class BasicElevatorModel extends Agent{
 				if (accept != null) {
 					System.out.println("Accepting proposal "+bestProposal+" from responder "+bestProposer.getName());
 					accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-					BasicElevatorModel.this.floors.remove(Integer.parseInt(request.getContent().split(" ")[1]));
+					ElevatorModel.this.floors.remove(Integer.parseInt(request.getContent().split(" ")[1]));
 				}						
 			}
 			

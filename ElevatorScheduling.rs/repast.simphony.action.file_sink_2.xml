@@ -1,12 +1,14 @@
 <repast.simphony.data2.engine.FileSinkDescriptor>
   <name>A File Sink</name>
-  <dataSet>Elevator Data</dataSet>
+  <dataSet>Elevator Data Set</dataSet>
   <delimiter>,</delimiter>
   <format>TABULAR</format>
   <sourceIds class="linked-hash-set">
     <string>Time in Elevator</string>
     <string>Time Waiting for Elevator</string>
     <string>tick</string>
+    <string>Mean Time inside elevator</string>
+    <string>Mean Time waiting for elevator</string>
   </sourceIds>
   <fileName>ModelOutput.txt</fileName>
   <addTimeStamp>true</addTimeStamp>

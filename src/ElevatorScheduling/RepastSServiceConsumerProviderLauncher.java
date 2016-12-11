@@ -1,4 +1,4 @@
-package serviceConsumerProviderVis;
+package ElevatorScheduling;
 
 import jade.core.AID;
 import jade.core.Profile;
@@ -47,12 +47,12 @@ public class RepastSServiceConsumerProviderLauncher extends RepastSLauncher {
 			MainController main = new MainController();
 			mainContainer.acceptNewAgent("Main", main).start();
 			for(int i = 0;  i < MainController.ELEVATORNUM; i++){
-				BasicElevatorModel elevator;
+				ElevatorModel elevator;
 				if(MainController.SECTORIZATION.equals("NONE")){
-					elevator = new BasicElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1));
+					elevator = new ElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1));
 				}
 				else{
-					elevator = new BasicElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1), (MainController.FLOORNUM/MainController.ELEVATORNUM)*i, (MainController.FLOORNUM/MainController.ELEVATORNUM)*(i+1));
+					elevator = new ElevatorModel(1000, 500, (50/MainController.ELEVATORNUM)*(i+1), (MainController.FLOORNUM/MainController.ELEVATORNUM)*i, (MainController.FLOORNUM/MainController.ELEVATORNUM)*(i+1));
 				}
 				mainContainer.acceptNewAgent("Elevator"+i, elevator).start();
 			} 
@@ -78,10 +78,6 @@ public class RepastSServiceConsumerProviderLauncher extends RepastSLauncher {
 
 		Grid<Object> grid = gridFactory.createGrid("grid", context, new GridBuilderParameters<Object>(
 				new WrapAroundBorders(), new SimpleGridAdder<Object>(), true, 50, MainController.FLOORNUM));
-
-		NetworkBuilder<Object> netBuilder = new NetworkBuilder<Object>("Service Consumer/Provider network", context,
-				true);
-		netBuilder.buildNetwork();
 
 		return super.build(context);
 	}

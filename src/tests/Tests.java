@@ -6,7 +6,7 @@ import java.util.LinkedHashSet;
 
 import org.junit.Test;
 
-import serviceConsumerProviderVis.BasicElevatorModel;
+import ElevatorScheduling.ElevatorModel;
 
 public class Tests {
 	@Test
@@ -15,8 +15,8 @@ public class Tests {
 		floorList.add(1);
 		floorList.add(5);
 		floorList.add(11);
-		BasicElevatorModel.Movement mv = BasicElevatorModel.Movement.NONE;
-		int result = BasicElevatorModel.searchNextObjective(floorList, 10, mv);
+		ElevatorModel.Movement mv = ElevatorModel.Movement.NONE;
+		int result = ElevatorModel.searchNextObjective(floorList, 10, mv);
 		assertEquals(result, 11);
 		//assertEquals(mv, BasicElevatorModel.Movement.UP);
 	}
@@ -26,8 +26,8 @@ public class Tests {
 		LinkedHashSet<Integer> floorList = new LinkedHashSet<Integer>();
 		floorList.add(15);
 		floorList.add(9);
-		BasicElevatorModel.Movement mv = BasicElevatorModel.Movement.DOWN;
-		int result = BasicElevatorModel.searchNextObjective(floorList, 10, mv);
+		ElevatorModel.Movement mv = ElevatorModel.Movement.DOWN;
+		int result = ElevatorModel.searchNextObjective(floorList, 10, mv);
 		assertEquals(result, 9);
 	}
 	
@@ -36,8 +36,8 @@ public class Tests {
 		LinkedHashSet<Integer> floorList = new LinkedHashSet<Integer>();
 		
 		
-		BasicElevatorModel.Movement mv = BasicElevatorModel.Movement.DOWN;
-		int result = BasicElevatorModel.searchNextObjective(floorList, 10, mv);
+		ElevatorModel.Movement mv = ElevatorModel.Movement.DOWN;
+		int result = ElevatorModel.searchNextObjective(floorList, 10, mv);
 		assertEquals(result, -1);
 	}
 	
@@ -52,6 +52,6 @@ public class Tests {
 		testList.add(3);
 		testList.add(0);
 		
-		assertEquals(BasicElevatorModel.getOrderOfRequest(testList, 1, BasicElevatorModel.Movement.UP, 17), 5);
+		assertEquals(ElevatorModel.getOrderOfRequest(testList, 1, ElevatorModel.Movement.UP, 17), 5);
 	}
 }

@@ -5,4 +5,5 @@
 <repast.simphony.action.file_sink context="ServiceConsumerProviderVis" file="repast.simphony.action.file_sink_2.xml" />
 <repast.simphony.action.time_series_chart context="ServiceConsumerProviderVis" file="repast.simphony.action.time_series_chart_3.xml" />
 <repast.simphony.action.display context="ServiceConsumerProviderVis" file="repast.simphony.action.display_4.xml" />
+<repast.simphony.userpanel.ui.DefaultUserPanelDescriptorAction context="ServiceConsumerProviderVis" file="repast.simphony.userpanel.ui.DefaultUserPanelDescriptorAction_5.xml" />
 </Scenario>

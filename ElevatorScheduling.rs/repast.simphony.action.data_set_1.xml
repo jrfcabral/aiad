@@ -19,7 +19,7 @@
       <string>Mean Time waiting for elevator</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
         <id>Mean Time waiting for elevator</id>
-        <className>serviceConsumerProviderVis.MainController</className>
+        <className>ElevatorScheduling.MainController</className>
         <methodName>waitingTime</methodName>
         <aggType>SUM</aggType>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
@@ -28,7 +28,7 @@
       <string>Mean Time inside elevator</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
         <id>Mean Time inside elevator</id>
-        <className>serviceConsumerProviderVis.BasicElevatorModel</className>
+        <className>ElevatorScheduling.ElevatorModel</className>
         <methodName>waitingTime</methodName>
         <aggType>MEAN</aggType>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
