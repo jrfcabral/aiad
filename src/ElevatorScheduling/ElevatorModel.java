@@ -67,25 +67,32 @@ public class ElevatorModel extends Agent{
 	public int stoppedTime = 0; // ticks/seconds
 	public int courseTime = 0; // ticks/seconds
 	public int totalTime = 0; // ticks/seconds
+	
+	private int totalWaitingTime = 0;
+	private int totalPeopleCaught = 0;
+	
+	private int totalTimeInElevator = 0;
+	private int totalPeopleReleased = 0;
+	
 	  
 
 	private MessageTemplate template = MessageTemplate.MatchPerformative(ACLMessage.CFP);
 	private MessageTemplate informTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
 	
-	public int waitingTime(){
-		int total = 0;
-		int people = 0;
-		for (ArrayList<Person> floor: this.people){
-			for(Person person: floor){
-				total += person.getTimeInElevator();
-				people++;
-			}
-		}
-		
-		if (people == 0)
+	public double waitingTime(){
+		if (totalPeopleReleased == 0)
 			return 0;
-		return total/people;
+		else 
+			return (double) totalTimeInElevator / (double)totalPeopleReleased;
+	}
 		
+	
+	
+	public double waitTimeInFloor(){
+		if (totalPeopleCaught == 0)
+			return 0;
+		else 
+			return (double) totalWaitingTime/ (double)totalPeopleCaught;
 	}
 	
 	public ElevatorModel(int timeBetweenFloors, int maxLoad, int startingX){
@@ -675,6 +682,8 @@ public class ElevatorModel extends Agent{
 			Logger.writeToStat("Time waiting for the elevator: " + p.timeWaiting + "\nTime in elevator: " + p.timeInElevator + "\n");
 			this.currLoad -= p.getWeight();
 			this.idleTime++;
+			this.totalTimeInElevator += p.timeInElevator;
+			this.totalPeopleReleased++;
 			it.remove();
 		}
 	}
@@ -707,6 +716,8 @@ public class ElevatorModel extends Agent{
 				this.idleTime++;
 				
 				Logger.writeAndPrint(getLocalName() + ": Entrou uma pessoa com objetivo: " + p.getDestination());
+				this.totalWaitingTime = p.timeWaiting;
+				this.totalPeopleCaught++;
 				it.remove();
 			}
 		}
