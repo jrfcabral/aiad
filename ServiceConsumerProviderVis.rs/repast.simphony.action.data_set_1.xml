@@ -1,0 +1,40 @@
+<repast.simphony.data2.engine.DataSetDescriptor>
+  <name>Elevator Data Set</name>
+  <type>AGGREGATE</type>
+  <inclTick>true</inclTick>
+  <inclBatchRun>false</inclBatchRun>
+  <inclRandomSeed>false</inclRandomSeed>
+  <scheduleParams>
+    <start>1.0</start>
+    <interval>200000.0</interval>
+    <priority>-Infinity</priority>
+    <pType>LAST</pType>
+    <duration>-1.0</duration>
+    <frequency>REPEAT</frequency>
+    <hashCode>-583759480</hashCode>
+  </scheduleParams>
+  <atEnd>false</atEnd>
+  <methodDataSources class="linked-hash-map">
+    <entry>
+      <string>Mean Time waiting for elevator</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>Mean Time waiting for elevator</id>
+        <className>serviceConsumerProviderVis.MainController</className>
+        <methodName>waitingTime</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>Mean Time inside elevator</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>Mean Time inside elevator</id>
+        <className>serviceConsumerProviderVis.BasicElevatorModel</className>
+        <methodName>waitingTime</methodName>
+        <aggType>MEAN</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+  </methodDataSources>
+  <countSources class="linked-hash-map"/>
+  <customNADataSources class="linked-hash-map"/>
+  <customAggDataSources class="linked-hash-map"/>
+</repast.simphony.data2.engine.DataSetDescriptor>
