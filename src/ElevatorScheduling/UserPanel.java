@@ -115,6 +115,24 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 				MainController.REQTYPE = (String) reqType.getSelectedItem();
 				MainController.REQPROBABILITY = reqProbability.getValue();
 				
+				try{
+					ElevatorModel.MAXLOAD = Integer.parseInt(maxLoad.getText());
+				}
+				catch(NumberFormatException e){
+					maxLoad.setText(Integer.toString(ElevatorModel.MAXLOAD));
+				}
+				
+				try{
+					ElevatorModel.TIMEBETWEENFLOORS = Integer.parseInt(tickPerSecond.getText());
+				}
+				catch(NumberFormatException e){
+					tickPerSecond.setText(Integer.toString(ElevatorModel.TIMEBETWEENFLOORS));
+				}
+				
+				MainController.SECTORIZATION = (String) sectorizationModel.getSelectedItem();
+				ElevatorModel.WEIGHTMODEL = (String) weightModel.getSelectedItem();
+				
+				
 			}
 			
 		});

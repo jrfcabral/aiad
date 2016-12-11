@@ -23,7 +23,7 @@ import sajas.sim.repasts.RepastSLauncher;
 import sajas.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 
-public class RepastSServiceConsumerProviderLauncher extends RepastSLauncher {
+public class RepastSElevatorSchedulingLauncher extends RepastSLauncher {
 
 	private ContainerController mainContainer;
 

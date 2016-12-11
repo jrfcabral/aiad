@@ -687,10 +687,9 @@ public class ElevatorModel extends Agent{
 		while(it.hasNext()){
 			Person p = it.next();
 			if(this.currLoad + p.getWeight() >= this.maxLoad){
-				continue;
+				;
 			}
-			
-			if(reqInfo.getDirection().equals("SIMPLE") || 
+			else if(reqInfo.getDirection().equals("SIMPLE") || 
 			(reqInfo.getDirection().equals("UP") && p.getDestination() > floor && MainController.REQTYPE.equals("DIRECTIONAL")) || 
 			(reqInfo.getDirection().equals("DOWN") && p.getDestination() < floor && MainController.REQTYPE.equals("DIRECTIONAL")) ||
 			(MainController.REQTYPE.equals("SPECIFIC") && reqInfo.getDestinationFloor().contains(p.getDestination()))){
@@ -708,10 +707,10 @@ public class ElevatorModel extends Agent{
 				this.idleTime++;
 				
 				Logger.writeAndPrint(getLocalName() + ": Entrou uma pessoa com objetivo: " + p.getDestination());
-				it.remove();
+				
 			}
 			
-			
+			it.remove();
 		}
 		searchNextObjective();
 	}
