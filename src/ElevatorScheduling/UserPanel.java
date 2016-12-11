@@ -43,7 +43,7 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 		JComboBox<String> weightModel = new JComboBox<String>(weightModelOptions);
 		
 		String[] sectorizationModelOptions = {"NONE", "RIGID", "DYNAMIC"};
-		JComboBox<String> sectorizationModel = new JComboBox<String>(weightModelOptions);
+		JComboBox<String> sectorizationModel = new JComboBox<String>(sectorizationModelOptions);
 		
 		JTextField maxLoad = new JTextField(Integer.toString(ElevatorModel.MAXLOAD));
 		JTextField tickPerSecond = new JTextField(Integer.toString(ElevatorModel.TIMEBETWEENFLOORS));

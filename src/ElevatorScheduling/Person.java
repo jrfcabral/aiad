@@ -5,8 +5,8 @@ import repast.simphony.random.RandomHelper;
 public class Person {
 	private double weight;
 	private int destination;
-	public int timeWaiting;
-	public int timeInElevator;
+	public int timeWaiting = 0;
+	public int timeInElevator = 0;
 	
 	public Person(int destination){
 		this.destination = destination;

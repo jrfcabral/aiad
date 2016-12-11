@@ -41,7 +41,7 @@ public class ElevatorModel extends Agent{
 	}
 	
 	public static String WEIGHTMODEL="STEP";
-	public static int MAXLOAD = 500;
+	public static int MAXLOAD = 700;
 	public static int TIMEBETWEENFLOORS = 1000;
 	
 	
@@ -683,17 +683,17 @@ public class ElevatorModel extends Agent{
 	private void getNewPassengers(int floor){
 		ListIterator<Person> it = MainController.peopleAtFloors.get(floor).listIterator();
 		RequestInformation reqInfo = this.floorInfo.get(floor);
-		
 		while(it.hasNext()){
 			Person p = it.next();
-			if(this.currLoad + p.getWeight() >= this.maxLoad){
-				;
-			}
-			else if(reqInfo.getDirection().equals("SIMPLE") || 
+			
+			if(reqInfo.getDirection().equals("SIMPLE") || 
 			(reqInfo.getDirection().equals("UP") && p.getDestination() > floor && MainController.REQTYPE.equals("DIRECTIONAL")) || 
 			(reqInfo.getDirection().equals("DOWN") && p.getDestination() < floor && MainController.REQTYPE.equals("DIRECTIONAL")) ||
 			(MainController.REQTYPE.equals("SPECIFIC") && reqInfo.getDestinationFloor().contains(p.getDestination()))){
-			
+				if(this.currLoad + p.getWeight() >= this.maxLoad){
+					it.remove();
+					continue;
+				}
 				this.currLoad += p.getWeight();
 				this.people.get(p.getDestination()).add(p);
 				this.floors.add(p.getDestination());
@@ -707,12 +707,9 @@ public class ElevatorModel extends Agent{
 				this.idleTime++;
 				
 				Logger.writeAndPrint(getLocalName() + ": Entrou uma pessoa com objetivo: " + p.getDestination());
-				
+				it.remove();
 			}
-			
-			it.remove();
 		}
-		searchNextObjective();
 	}
 	
 	private int getNumPeople(){
@@ -816,6 +813,7 @@ public class ElevatorModel extends Agent{
 					System.out.println("Accepting proposal "+bestProposal+" from responder "+bestProposer.getName());
 					accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
 					ElevatorModel.this.floors.remove(Integer.parseInt(request.getContent().split(" ")[1]));
+					ElevatorModel.this.floorInfo.remove(currentObjective);
 				}						
 			}
 			
