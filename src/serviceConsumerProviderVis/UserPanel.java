@@ -17,12 +17,16 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 	@Override
 	public JPanel createPanel() {
 		JPanel settingsPanel = new JPanel();
-		settingsPanel.setLayout(new GridLayout(6,1));
+		settingsPanel.setLayout(new GridLayout(9,1));
 		
 		JLabel floorNumLbl = new JLabel("Number of floors"); 
 		JLabel elevatorNumLbl = new JLabel("Number of elevators");
 		JLabel reqTypeLbl = new JLabel("Type of request");
 		JLabel reqProbabilityLbl = new JLabel("Probability of generating requests (per second)");
+		JLabel weightModelLbl = new JLabel("Weight Model");
+		JLabel sectorizationLbl = new JLabel("Sectorization Model");
+		JLabel maxLoadLbl = new JLabel("Elevator max load");
+		JLabel tickPerSecondLbl = new JLabel("Time between ticks (in milliseconds)");
 		
 		JTextField elevatorNum = new JTextField(Integer.toString(MainController.ELEVATORNUM));
 		JTextField floorNum = new JTextField(Integer.toString(MainController.FLOORNUM));
@@ -35,6 +39,16 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 		reqProbability.setMaximum(100);
 		reqProbability.setValue(MainController.REQPROBABILITY);
 		
+		String[] weightModelOptions = {"NONE", "STEP", "INCREMENTAL"};
+		JComboBox<String> weightModel = new JComboBox<String>(weightModelOptions);
+		
+		String[] sectorizationModelOptions = {"NONE", "RIGID", "DYNAMIC"};
+		JComboBox<String> sectorizationModel = new JComboBox<String>(weightModelOptions);
+		
+		JTextField maxLoad = new JTextField(Integer.toString(BasicElevatorModel.MAXLOAD));
+		JTextField tickPerSecond = new JTextField(Integer.toString(BasicElevatorModel.TIMEBETWEENFLOORS));
+		
+		
 		JPanel floorPanel = new JPanel(new GridLayout(1, 2));
 		floorPanel.add(floorNumLbl);
 		floorPanel.add(floorNum);
@@ -42,6 +56,14 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 		JPanel elevatorPanel = new JPanel(new GridLayout(1, 2));
 		elevatorPanel.add(elevatorNumLbl);
 		elevatorPanel.add(elevatorNum);
+		
+		JPanel maxLoadPanel = new JPanel(new GridLayout(1, 2));
+		maxLoadPanel.add(maxLoadLbl);
+		maxLoadPanel.add(maxLoad);
+		
+		JPanel tickPanel = new JPanel(new GridLayout(1, 2));
+		tickPanel.add(tickPerSecondLbl);
+		tickPanel.add(tickPerSecond);
 		
 		JPanel reqTPanel = new JPanel(new GridLayout(1, 2));
 		reqTPanel.add(reqTypeLbl);
@@ -51,12 +73,25 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 		reqPPanel.add(reqProbabilityLbl);
 		reqPPanel.add(reqProbability);
 		
+		JPanel weightModelPanel = new JPanel(new GridLayout(1, 2));
+		weightModelPanel.add(weightModelLbl);
+		weightModelPanel.add(weightModel);
+		
+		JPanel sectorizationModelPanel = new JPanel(new GridLayout(1, 2));
+		sectorizationModelPanel.add(sectorizationLbl);
+		sectorizationModelPanel.add(sectorizationModel);
+		
+		
 		JButton saveButton = new JButton("Save settings");
 		
 		settingsPanel.add(floorPanel);
 		settingsPanel.add(elevatorPanel);
+		settingsPanel.add(maxLoadPanel);
+		settingsPanel.add(tickPanel);
 		settingsPanel.add(reqTPanel);
 		settingsPanel.add(reqPPanel);
+		settingsPanel.add(weightModelPanel);
+		settingsPanel.add(sectorizationModelPanel);
 		settingsPanel.add(saveButton);
 		
 		saveButton.addActionListener(new ActionListener(){

@@ -71,13 +71,13 @@ public class RepastSServiceConsumerProviderLauncher extends RepastSLauncher {
 
 		ContinuousSpaceFactory spaceFactory = ContinuousSpaceFactoryFinder.createContinuousSpaceFactory(null);
 		ContinuousSpace<Object> space = spaceFactory.createContinuousSpace("space", context,
-				new RandomCartesianAdder<Object>(), new repast.simphony.space.continuous.WrapAroundBorders(), 50, 50);
+				new RandomCartesianAdder<Object>(), new repast.simphony.space.continuous.WrapAroundBorders(), 50, MainController.FLOORNUM);
 		GridFactory gridFactory = GridFactoryFinder.createGridFactory(null);
 
 		// Correct import: import repast.simphony.space.grid.WrapAroundBorders;
 
 		Grid<Object> grid = gridFactory.createGrid("grid", context, new GridBuilderParameters<Object>(
-				new WrapAroundBorders(), new SimpleGridAdder<Object>(), true, 50, 50));
+				new WrapAroundBorders(), new SimpleGridAdder<Object>(), true, 50, MainController.FLOORNUM));
 
 		NetworkBuilder<Object> netBuilder = new NetworkBuilder<Object>("Service Consumer/Provider network", context,
 				true);

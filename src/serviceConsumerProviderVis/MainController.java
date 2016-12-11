@@ -28,10 +28,9 @@ public class MainController extends Agent {
 	public static int FLOORNUM = 21;
 	public static String REQTYPE = "SIMPLE"; //SIMPLE, DIRECTIONAL or SPECIFIC
 	public static int ELEVATORNUM = 2;
-	public static int REQPROBABILITY = 20;
+	public static int REQPROBABILITY = 15;
 	public static String SECTORIZATION	= "DYNAMIC";
 	public static String REALLOCATION = "NONE";
-	
 	
 	public static ArrayList<ArrayList<Person>> peopleAtFloors = new ArrayList< ArrayList<Person>>(FLOORNUM);	
 	
@@ -94,7 +93,7 @@ public class MainController extends Agent {
 					LinkedList<Integer> targets = new LinkedList<Integer>();
 					
 					if (floor < 10) {
-						for(int i = 0; i < RandomHelper.nextIntFromTo(1, 5); i++){
+						for(int i = 0; i < RandomHelper.nextIntFromTo(1, 2); i++){
 							int personDestination = randomDestination(0);
 							MainController.peopleAtFloors.get(0).add(new Person(personDestination));
 							if(min > personDestination){

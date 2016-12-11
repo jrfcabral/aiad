@@ -41,11 +41,13 @@ public class BasicElevatorModel extends Agent{
 	}
 	
 	public static String WEIGHTMODEL="STEP";
+	public static int MAXLOAD = 500;
+	public static int TIMEBETWEENFLOORS = 1000;
 	
 	
 	private int currentFloor;
-	private int timeBetweenFloors = 1000; //millis
-	private int maxLoad = 500; //kg
+	private int timeBetweenFloors = MAXLOAD; //millis
+	private int maxLoad = TIMEBETWEENFLOORS; //kg
 	private LinkedHashSet<Integer> floors;
 	private HashMap<Integer, RequestInformation> floorInfo;
 	private int idleTime; //time the elevator needs to stay at a floor for everyone to get in/out
