@@ -17,7 +17,7 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 	@Override
 	public JPanel createPanel() {
 		JPanel settingsPanel = new JPanel();
-		settingsPanel.setLayout(new GridLayout(9,1));
+		settingsPanel.setLayout(new GridLayout(10,1));
 		
 		JLabel floorNumLbl = new JLabel("Number of floors"); 
 		JLabel elevatorNumLbl = new JLabel("Number of elevators");
@@ -27,6 +27,10 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 		JLabel sectorizationLbl = new JLabel("Sectorization Model");
 		JLabel maxLoadLbl = new JLabel("Elevator max load");
 		JLabel tickPerSecondLbl = new JLabel("Time between ticks (in milliseconds)");
+		JLabel reallocationModelLbl = new JLabel("Reallocation model");
+		
+		String[] reallocationModelOptions = {"NONE", "IDLE", "GENERAL"};
+		JComboBox<String> reallocationModel = new JComboBox<String>(reallocationModelOptions);
 		
 		JTextField elevatorNum = new JTextField(Integer.toString(MainController.ELEVATORNUM));
 		JTextField floorNum = new JTextField(Integer.toString(MainController.FLOORNUM));
@@ -81,6 +85,10 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 		sectorizationModelPanel.add(sectorizationLbl);
 		sectorizationModelPanel.add(sectorizationModel);
 		
+		JPanel reallocationPanel = new JPanel(new GridLayout(1, 2));
+		reallocationPanel.add(reallocationModelLbl);
+		reallocationPanel.add(reallocationModel);
+		
 		
 		JButton saveButton = new JButton("Save settings");
 		
@@ -92,6 +100,7 @@ public class UserPanel implements repast.simphony.userpanel.ui.UserPanelCreator{
 		settingsPanel.add(reqPPanel);
 		settingsPanel.add(weightModelPanel);
 		settingsPanel.add(sectorizationModelPanel);
+		settingsPanel.add(reallocationPanel);
 		settingsPanel.add(saveButton);
 		
 		saveButton.addActionListener(new ActionListener(){

@@ -40,7 +40,7 @@ public class ElevatorModel extends Agent{
 		NONE, UP, DOWN
 	}
 	
-	public static String WEIGHTMODEL="STEP";
+	public static String WEIGHTMODEL="NONE";
 	public static int MAXLOAD = 700;
 	public static int TIMEBETWEENFLOORS = 1000;
 	
@@ -625,7 +625,7 @@ public class ElevatorModel extends Agent{
 			if(info.getRequestScore() != -1){
 				ACLMessage reallocRequest = new ACLMessage(ACLMessage.CFP);
 				reallocRequest.setContent(info.getActualRequest() + " REALLOC");
-				completeMessageAndSend(reallocRequest, info.getRequestScore());
+				completeMessageAndSend(reallocRequest, calculateScore(info.getActualRequest()));
 			}
 			
 		}
