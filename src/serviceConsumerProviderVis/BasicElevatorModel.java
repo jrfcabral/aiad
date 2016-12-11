@@ -70,6 +70,20 @@ public class BasicElevatorModel extends Agent{
 	private MessageTemplate template = MessageTemplate.MatchPerformative(ACLMessage.CFP);
 	private MessageTemplate informTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
 	
+	public int waitingTime(){
+		int total = 0;
+		int people = 0;
+		for (ArrayList<Person> floor: this.people){
+			for(Person person: floor){
+				total += person.getTimeInElevator();
+				people++;
+			}
+		}
+		if (people == 0)
+			return 0;
+		return total/people;
+	}
+	
 	public BasicElevatorModel(int timeBetweenFloors, int maxLoad, int startingX){
 		this.timeBetweenFloors = timeBetweenFloors;
 		this.maxLoad = maxLoad;

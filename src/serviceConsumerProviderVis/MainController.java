@@ -42,6 +42,19 @@ public class MainController extends Agent {
 		}
 	}
 	
+	public int waitingTime(){
+		int total = 0;
+		int people = 0;
+		for (ArrayList<Person> floor: this.peopleAtFloors){
+			for (Person person: floor){
+				total += person.getTimeWaiting();
+				people++;
+			}
+		}
+		int result = people == 0 ?  0 : total/people;
+		return result;
+	}
+	
 	private int randomDestination(int origin){
 		int destination;
 		do{
